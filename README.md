@@ -24,9 +24,17 @@ Herramienta web para preparar imágenes y obtener parámetros de grabado/corte o
 | Pizarra / Cerámica   | ✅      | ❌        | ❌        |
 | Aluminio anodizado   | ✅      | ❌        | ❌        |
 
+## Desarrollo
+
+```bash
+npm install
+npm run dev      # servidor local en http://localhost:5173
+npm run build    # compila a dist/
+```
+
 ## Uso
 
-1. Abrí `index.html` en cualquier navegador moderno (no se necesita servidor ni instalación)
+1. Abrí la app en el navegador (`npm run dev` o `dist/index.html`)
 2. Arrastrá o seleccioná una imagen
 3. Elegí el material, el tono y el modo de operación
 4. Ajustá los parámetros según el modo:
@@ -43,10 +51,17 @@ Herramienta web para preparar imágenes y obtener parámetros de grabado/corte o
 
 ```
 laser-prep-falcon5w/
-├── index.html   # Estructura HTML
-├── style.css    # Estilos (tema industrial dark, fuentes Orbitron + JetBrains Mono)
-├── main.js      # Lógica JS: base de datos de materiales, procesamiento de imagen, UI
-└── README.md    # Este archivo
+├── index.html         # Estructura HTML
+├── style.css          # Estilos (tema industrial dark, fuentes Orbitron + JetBrains Mono)
+├── vite.config.js     # Configuración de Vite
+├── package.json
+├── src/
+│   ├── main.js        # Entry point — event wiring y orquestación
+│   ├── db.js          # Base de datos de materiales y parámetros
+│   ├── state.js       # Estado global de la app
+│   ├── imageProcessing.js  # Floyd-Steinberg, Sobel, trazado de contornos, RDP
+│   └── ui.js          # Construcción dinámica de grillas y display de parámetros
+└── README.md
 ```
 
 ## Procesamiento de imagen
@@ -95,7 +110,8 @@ laser-prep-falcon5w/
 
 ## Tecnologías
 
-- HTML5 + CSS3 + JavaScript vanilla (sin dependencias)
+- HTML5 + CSS3 + JavaScript (ES modules)
+- [Vite](https://vitejs.dev/) como build tool
 - Canvas API para procesamiento de imagen
 - Google Fonts: [Orbitron](https://fonts.google.com/specimen/Orbitron), [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono), [DM Sans](https://fonts.google.com/specimen/DM+Sans)
 
