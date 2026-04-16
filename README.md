@@ -8,8 +8,9 @@ Herramienta web para preparar imágenes y obtener parámetros de grabado/corte o
 - **Parámetros recomendados** (velocidad, potencia, pasadas, DPI, intervalo, aire asistido)
 - **Procesamiento de imagen** con algoritmo Floyd-Steinberg para grabado
 - **Modo corte** con umbral configurable para siluetas B/N
+- **Modo bordes SVG** — detección de contornos y exportación vectorial lista para grabar/cortar
 - **Vista previa** original vs. procesada en tiempo real
-- **Descarga** de la imagen lista para importar en LightBurn, LaserGRBL o el software de Creality
+- **Descarga** de imagen procesada (PNG) o vectores de borde (SVG) para LightBurn, LaserGRBL o Creality Laser
 
 ## Materiales soportados
 
@@ -28,10 +29,15 @@ Herramienta web para preparar imágenes y obtener parámetros de grabado/corte o
 1. Abrí `index.html` en cualquier navegador moderno (no se necesita servidor ni instalación)
 2. Arrastrá o seleccioná una imagen
 3. Elegí el material, el tono y el modo de operación
-4. Ajustá contraste, brillo y dithering según necesitás
+4. Ajustá los parámetros según el modo:
+   - **Grabar** — contraste, brillo, dithering
+   - **Cortar** — contraste, brillo, umbral (threshold), grosor
+   - **Bordes SVG** — contraste, brillo, sensibilidad de bordes
 5. Presioná **⚡ Procesar imagen**
 6. Copiá los parámetros mostrados a tu software de grabado
-7. Descargá la imagen procesada con **⬇ Descargar imagen procesada**
+7. Descargá el resultado:
+   - Modos Grabar / Cortar → **⬇ Descargar imagen procesada** (PNG)
+   - Modo Bordes SVG → **⬇ Descargar SVG para láser** (SVG vectorial)
 
 ## Estructura del proyecto
 
@@ -55,6 +61,13 @@ laser-prep-falcon5w/
 1. Conversión a escala de grises
 2. Ajuste de contraste y brillo
 3. **Umbral (threshold)** — convierte cada píxel a negro puro o blanco puro para generar una silueta limpia
+
+### Modo Bordes SVG
+1. Conversión a escala de grises + ajuste de contraste y brillo
+2. **Detección Sobel** — calcula el gradiente de intensidad en X e Y y umbraliza por porcentaje del gradiente máximo (slider "Sensibilidad de bordes")
+3. **Trazado de contornos** — recorre los píxeles de borde en 8-conectividad generando polilíneas continuas
+4. **Simplificación Ramer-Douglas-Peucker** (ε = 1 px) — reduce puntos redundantes sin perder forma
+5. **Exportación SVG** con `stroke="#000000" fill="none" stroke-width="0.1"` — trazo fino (hairline) compatible con LightBurn y LaserGRBL como capa de trazo vectorial
 
 ## Parámetros — referencia rápida (Falcon 5W)
 
