@@ -1,0 +1,14 @@
+{
+  "name": "laser-prep-falcon5w",
+  "version": "1.0.0",
+  "description": "Laser Prep Studio — Creality Falcon 5W",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

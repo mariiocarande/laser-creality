@@ -807,6 +807,21 @@ input[type="range"]::-webkit-slider-thumb {
   cursor: not-allowed;
 }
 
+/* ── OUTPUT INFO BAR ── */
+.output-info {
+  padding: 8px 20px;
+  border-top: 1px solid var(--border);
+  font-family: var(--fm);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--text3);
+  text-align: center;
+}
+
+.output-info strong {
+  color: var(--accent);
+}
+
 /* ── HIDDEN CANVAS ── */
 #cv { display: none; }
 
