@@ -1,0 +1,91 @@
+# Laser Prep Studio — Creality Falcon 5W
+
+Herramienta web para preparar imágenes y obtener parámetros de grabado/corte optimizados para la grabadora láser **Creality Falcon 5W** (diodo 5W).
+
+## Características
+
+- **7 materiales** soportados con 3 tonos cada uno
+- **Parámetros recomendados** (velocidad, potencia, pasadas, DPI, intervalo, aire asistido)
+- **Procesamiento de imagen** con algoritmo Floyd-Steinberg para grabado
+- **Modo corte** con umbral configurable para siluetas B/N
+- **Vista previa** original vs. procesada en tiempo real
+- **Descarga** de la imagen lista para importar en LightBurn, LaserGRBL o el software de Creality
+
+## Materiales soportados
+
+| Material             | Grabado | Corte 3mm | Corte 6mm |
+|----------------------|---------|-----------|-----------|
+| Madera sólida        | ✅      | ✅        | ✅        |
+| Triplay / MDF        | ✅      | ✅        | ✅ (claro)|
+| Acrílico             | ✅      | ✅        | ❌        |
+| Cuero                | ✅      | ✅        | ❌        |
+| Cartón / Papel       | ✅      | ✅        | ❌        |
+| Pizarra / Cerámica   | ✅      | ❌        | ❌        |
+| Aluminio anodizado   | ✅      | ❌        | ❌        |
+
+## Uso
+
+1. Abrí `index.html` en cualquier navegador moderno (no se necesita servidor ni instalación)
+2. Arrastrá o seleccioná una imagen
+3. Elegí el material, el tono y el modo de operación
+4. Ajustá contraste, brillo y dithering según necesitás
+5. Presioná **⚡ Procesar imagen**
+6. Copiá los parámetros mostrados a tu software de grabado
+7. Descargá la imagen procesada con **⬇ Descargar imagen procesada**
+
+## Estructura del proyecto
+
+```
+laser-prep-falcon5w/
+├── index.html   # Estructura HTML
+├── style.css    # Estilos (tema industrial dark, fuentes Orbitron + JetBrains Mono)
+├── main.js      # Lógica JS: base de datos de materiales, procesamiento de imagen, UI
+└── README.md    # Este archivo
+```
+
+## Procesamiento de imagen
+
+### Modo Grabar
+1. Conversión a escala de grises (fórmula de luminancia BT.601)
+2. Ajuste de contraste y brillo
+3. Inversión opcional
+4. **Dithering Floyd-Steinberg** — distribuye el error de cuantización a píxeles vecinos, generando patrones que simulan tonos grises con una impresora de 1 bit
+
+### Modo Cortar
+1. Conversión a escala de grises
+2. Ajuste de contraste y brillo
+3. **Umbral (threshold)** — convierte cada píxel a negro puro o blanco puro para generar una silueta limpia
+
+## Parámetros — referencia rápida (Falcon 5W)
+
+> Valores de referencia. **Siempre hacer una prueba en un trozo del mismo material antes de grabar la pieza final.** Los valores pueden variar según el modelo exacto del material, el enfoque del láser y las condiciones ambientales.
+
+| Material           | Tono   | Modo    | Velocidad | Potencia |
+|--------------------|--------|---------|-----------|----------|
+| Madera sólida      | Clara  | Grabar  | 3000      | 65%      |
+| Madera sólida      | Media  | Grabar  | 2500      | 75%      |
+| Madera sólida      | Oscura | Grabar  | 2000      | 85%      |
+| Madera sólida      | Clara  | Corte 3mm | 300    | 95%      |
+| Triplay / MDF      | Medio  | Grabar  | 2000      | 80%      |
+| Triplay / MDF      | Medio  | Corte 3mm | 180    | 100%     |
+| Acrílico           | Color  | Grabar  | 1500      | 85%      |
+| Acrílico           | Color  | Corte 3mm | 120    | 100%     |
+| Cuero              | Natural| Grabar  | 3500      | 55%      |
+| Aluminio anodizado | Negro  | Grabar  | 1500      | 100%     |
+
+## Seguridad
+
+- Siempre usar **protección ocular** certificada para el rango UV/visible del láser
+- **Ventilar** el área de trabajo — muchos materiales generan gases tóxicos
+- **Nunca** grabar PVC, cuero cromado ni materiales que liberen cloro al quemarse
+- Mantener un **extintor** cerca y nunca dejar el equipo sin supervisión
+
+## Tecnologías
+
+- HTML5 + CSS3 + JavaScript vanilla (sin dependencias)
+- Canvas API para procesamiento de imagen
+- Google Fonts: [Orbitron](https://fonts.google.com/specimen/Orbitron), [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono), [DM Sans](https://fonts.google.com/specimen/DM+Sans)
+
+## Licencia
+
+MIT — libre para uso personal y comercial.

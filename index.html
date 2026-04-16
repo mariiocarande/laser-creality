@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creality Falcon 5W — Laser Prep Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <svg class="logo-svg" width="40" height="40" viewBox="0 0 40 40" fill="none">
+        <rect width="40" height="40" rx="8" fill="#111820"/>
+        <rect x="1" y="1" width="38" height="38" rx="7.5" stroke="#1a2530"/>
+        <path d="M8 20 L20 8 L32 20 L20 32 Z" stroke="#ff6b1a" stroke-width="1.5" fill="none" opacity=".4"/>
+        <circle cx="20" cy="20" r="3" fill="#ff6b1a"/>
+        <line x1="20" y1="8" x2="20" y2="32" stroke="#ff6b1a" stroke-width=".5" opacity=".3"/>
+        <line x1="8" y1="20" x2="32" y2="20" stroke="#ff6b1a" stroke-width=".5" opacity=".3"/>
+        <circle cx="20" cy="20" r="8" stroke="#ffb020" stroke-width=".5" fill="none" opacity=".4" stroke-dasharray="3 3"/>
+      </svg>
+      <div class="logo-info">
+        <div class="logo-title">Laser Prep Studio</div>
+        <div class="logo-sub">Creality Falcon 5W</div>
+      </div>
+    </div>
+    <div class="status">
+      <span class="dot"></span>
+      <span>Sistema listo</span>
+    </div>
+  </header>
+
+  <!-- MAIN GRID -->
+  <div class="grid">
+
+    <!-- LEFT: CONTROLS -->
+    <div>
+
+      <!-- UPLOAD -->
+      <div class="panel" style="margin-bottom:16px">
+        <div class="panel-hd">
+          <span class="panel-hd-ico">📁</span>
+          <span class="panel-hd-txt">Cargar imagen</span>
+        </div>
+        <div class="panel-body">
+          <div id="drop-zone">
+            <input type="file" id="file-input" accept="image/*">
+            <span class="up-ico">⬆</span>
+            <div class="up-title">Arrastrá o hacé click</div>
+            <div class="up-sub">PNG, JPG, BMP, SVG — máx. 20 MB</div>
+          </div>
+          <div id="thumb-row">
+            <img id="thumb-img" src="" alt="">
+            <div id="thumb-info">
+              <b id="thumb-name">—</b><br>
+              <span id="thumb-size"></span>
+            </div>
+            <button id="change-btn">Cambiar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MATERIAL + COLOR + MODE -->
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-hd-ico">⚙️</span>
+          <span class="panel-hd-txt">Configuración de material</span>
+        </div>
+        <div class="panel-body">
+
+          <div class="sec-lbl">Material</div>
+          <div class="mat-grid" id="mat-grid">
+            <!-- filled by main.js -->
+          </div>
+
+          <div id="mat-note"></div>
+
+          <div class="sec-lbl">Color / Tono</div>
+          <div class="col-opts" id="col-opts">
+            <!-- filled by main.js -->
+          </div>
+
+          <div class="sec-lbl">Modo de operación</div>
+          <div class="mode-row">
+            <div class="mode-btn on" data-mode="engrave" onclick="setMode('engrave')">
+              <span class="mode-ico">🔥</span>
+              <div class="mode-nm">Grabar</div>
+            </div>
+            <div class="mode-btn" data-mode="cut" onclick="setMode('cut')">
+              <span class="mode-ico">✂️</span>
+              <div class="mode-nm">Cortar</div>
+            </div>
+          </div>
+
+          <div id="thick-row">
+            <div class="thick-btn on" data-t="3mm" onclick="setThick('3mm')">3 mm</div>
+            <div class="thick-btn" data-t="6mm" onclick="setThick('6mm')">6 mm</div>
+          </div>
+
+          <div class="sec-lbl">Ajustes de imagen</div>
+
+          <div class="sl-group">
+            <div class="sl-top">
+              <span class="sl-nm">Contraste</span>
+              <span class="sl-val" id="lbl-contrast">1.20</span>
+            </div>
+            <input type="range" id="sl-contrast" min="0.3" max="3" step="0.05" value="1.2" oninput="onSlider()">
+          </div>
+
+          <div class="sl-group">
+            <div class="sl-top">
+              <span class="sl-nm">Brillo</span>
+              <span class="sl-val" id="lbl-bright">0</span>
+            </div>
+            <input type="range" id="sl-bright" min="-80" max="80" step="1" value="0" oninput="onSlider()">
+          </div>
+
+          <div id="thresh-group" class="sl-group" style="display:none">
+            <div class="sl-top">
+              <span class="sl-nm">Umbral (threshold)</span>
+              <span class="sl-val" id="lbl-thresh">128</span>
+            </div>
+            <input type="range" id="sl-thresh" min="30" max="225" step="1" value="128" oninput="onSlider()">
+          </div>
+
+          <div class="tog-row" id="dither-row">
+            <span class="tog-lbl">Dithering Floyd-Steinberg</span>
+            <button class="tog on" id="tog-dither" onclick="toggleDither()"></button>
+          </div>
+
+          <div class="tog-row">
+            <span class="tog-lbl">Invertir imagen</span>
+            <button class="tog" id="tog-invert" onclick="toggleInvert()"></button>
+          </div>
+
+          <button id="proc-btn" onclick="processImage()" disabled>
+            ⚡ Procesar imagen
+          </button>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: PREVIEW + RESULTS -->
+    <div class="right-col">
+
+      <!-- PREVIEW -->
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-hd-ico">👁</span>
+          <span class="panel-hd-txt">Vista previa</span>
+        </div>
+        <div class="prev-tabs">
+          <button class="prev-tab on" data-tab="original" onclick="switchTab('original')">Original</button>
+          <button class="prev-tab" data-tab="processed" onclick="switchTab('processed')">Procesada</button>
+        </div>
+        <div class="prev-area" id="prev-area">
+          <div class="prev-empty" id="prev-empty">
+            <span class="prev-empty-ico">🖼</span>
+            <div class="prev-empty-txt">Sin imagen cargada</div>
+          </div>
+          <img id="prev-img" src="" alt="" style="display:none">
+          <div id="processing-overlay">
+            <div class="spinner"></div>
+            <span class="proc-lbl">Procesando…</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS RESULT -->
+      <div class="panel" id="results-panel">
+        <div class="panel-hd">
+          <span class="panel-hd-ico">📊</span>
+          <span class="panel-hd-txt">Parámetros recomendados — Falcon 5W</span>
+        </div>
+        <div class="panel-body">
+
+          <div class="settings-grid" id="settings-grid">
+            <div class="s-card hi">
+              <div class="s-lbl">Velocidad</div>
+              <div class="s-val" id="val-speed">—</div>
+              <div class="s-unit">mm/min</div>
+            </div>
+            <div class="s-card hi">
+              <div class="s-lbl">Potencia</div>
+              <div class="s-val" id="val-power">—</div>
+              <div class="s-unit">%</div>
+            </div>
+            <div class="s-card">
+              <div class="s-lbl">Pasadas</div>
+              <div class="s-val" id="val-passes">—</div>
+              <div class="s-unit">veces</div>
+            </div>
+            <div class="s-card warn">
+              <div class="s-lbl">Intervalo líneas</div>
+              <div class="s-val" id="val-interval">—</div>
+              <div class="s-unit">mm</div>
+            </div>
+            <div class="s-card warn">
+              <div class="s-lbl">DPI sugerido</div>
+              <div class="s-val" id="val-dpi">254</div>
+              <div class="s-unit">dpi</div>
+            </div>
+            <div class="s-card">
+              <div class="s-lbl">Aire asistido</div>
+              <div class="s-val" id="val-air" style="font-size:14px;padding-top:4px">—</div>
+              <div class="s-unit">recomendado</div>
+            </div>
+          </div>
+
+          <div id="no-cut-warn" class="note-box">
+            <strong>⚠ Corte no recomendado</strong><br>
+            Este material no puede ser cortado con una láser de 5W. Solo modo grabado disponible.
+          </div>
+
+          <div class="note-box" id="note-box">
+            <strong>📝 Nota: </strong>
+            <span id="note-text">Seleccioná material y color para ver los parámetros.</span>
+          </div>
+
+          <button class="dl-btn" id="dl-btn" onclick="downloadProcessed()" disabled>
+            ⬇ Descargar imagen procesada
+          </button>
+
+        </div>
+      </div>
+
+    </div><!-- /right-col -->
+  </div><!-- /grid -->
+
+</div><!-- /app -->
+
+<!-- Hidden canvas for image processing -->
+<canvas id="cv"></canvas>
+
+<script src="main.js"></script>
+</body>
+</html>
