@@ -93,6 +93,10 @@
               <span class="mode-ico">✂️</span>
               <div class="mode-nm">Cortar</div>
             </div>
+            <div class="mode-btn" data-mode="vector" onclick="setMode('vector')">
+              <span class="mode-ico">〰</span>
+              <div class="mode-nm">Bordes SVG</div>
+            </div>
           </div>
 
           <div id="thick-row">
@@ -116,6 +120,14 @@
               <span class="sl-val" id="lbl-bright">0</span>
             </div>
             <input type="range" id="sl-bright" min="-80" max="80" step="1" value="0" oninput="onSlider()">
+          </div>
+
+          <div id="edge-thresh-group" class="sl-group" style="display:none">
+            <div class="sl-top">
+              <span class="sl-nm">Sensibilidad de bordes</span>
+              <span class="sl-val" id="lbl-edge-thresh">20</span>
+            </div>
+            <input type="range" id="sl-edge-thresh" min="2" max="80" step="1" value="20" oninput="onSlider()">
           </div>
 
           <div id="thresh-group" class="sl-group" style="display:none">
@@ -223,6 +235,9 @@
 
           <button class="dl-btn" id="dl-btn" onclick="downloadProcessed()" disabled>
             ⬇ Descargar imagen procesada
+          </button>
+          <button class="dl-btn" id="svg-dl-btn" onclick="downloadSVG()" disabled style="display:none;border-color:#00cc88;color:#00cc88">
+            ⬇ Descargar SVG para láser
           </button>
 
         </div>
