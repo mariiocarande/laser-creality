@@ -1,4 +1,5 @@
 export const state = {
+  machine:       'creality-falcon5w',
   material:      'wood',
   color:         'medium',
   mode:          'engrave',   // 'engrave' | 'cut' | 'vector'

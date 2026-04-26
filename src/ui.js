@@ -1,6 +1,53 @@
 import { DB } from './db.js'
 import { state } from './state.js'
+import { MACHINES, applyMachine } from './machines.js'
 import { estimateTime } from './imageProcessing.js'
+
+export function buildMachineSelector(onChange) {
+  const sel = document.getElementById('machine-select')
+  sel.innerHTML = ''
+
+  const brands = {}
+  Object.entries(MACHINES).forEach(([key, m]) => {
+    if (!brands[m.brand]) brands[m.brand] = []
+    brands[m.brand].push({ key, ...m })
+  })
+
+  Object.entries(brands).forEach(([brand, machines]) => {
+    const grp = document.createElement('optgroup')
+    grp.label = brand
+    machines.forEach(m => {
+      const opt = document.createElement('option')
+      opt.value = m.key
+      opt.textContent = `${m.name} — ${m.power}W`
+      if (m.key === state.machine) opt.selected = true
+      grp.appendChild(opt)
+    })
+    sel.appendChild(grp)
+  })
+
+  sel.addEventListener('change', () => onChange(sel.value))
+  updateMachineInfo()
+}
+
+export function updateMachineInfo() {
+  const m = MACHINES[state.machine]
+  if (!m) return
+
+  const specs = document.getElementById('machine-specs')
+  if (specs) {
+    specs.innerHTML =
+      `<span class="machine-badge power">${m.power}W</span>` +
+      `<span class="machine-badge area">${m.area.w} × ${m.area.h} mm</span>` +
+      `<span class="machine-badge area">máx ${Math.round(m.maxSpeed / 1000)}k mm/min</span>`
+  }
+
+  const headerMachine = document.getElementById('header-machine')
+  if (headerMachine) headerMachine.textContent = `${m.brand} ${m.name}`
+
+  const panelTitle = document.getElementById('results-panel-hd-txt')
+  if (panelTitle) panelTitle.textContent = `Parámetros — ${m.brand} ${m.name}`
+}
 
 export function buildMaterialGrid(onSelect) {
   const g = document.getElementById('mat-grid')
@@ -41,15 +88,19 @@ export function buildColorOpts(onSelect) {
 }
 
 export function updateSettingsDisplay() {
+  updateMachineInfo()
+
   const mat = DB[state.material]
   const col = mat.colors[state.color]
 
-  let s
+  let baseParams
   if (state.mode === 'engrave') {
-    s = col.engrave
+    baseParams = col.engrave
   } else {
-    s = col[state.thickness === '3mm' ? 'cut3mm' : 'cut6mm']
+    baseParams = col[state.thickness === '3mm' ? 'cut3mm' : 'cut6mm']
   }
+
+  const s = applyMachine(baseParams, state.machine, state.mode)
 
   const warn = document.getElementById('no-cut-warn')
 

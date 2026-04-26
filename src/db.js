@@ -147,7 +147,7 @@ export const DB = {
   slate: {
     name: 'Pizarra / Cerámica',
     icon: '🪨',
-    note: 'No se puede cortar con 5W. Solo grabado superficial. Humedecer levemente mejora el resultado.',
+    note: 'No se puede cortar con láser diodo. Solo grabado superficial. Humedecer levemente mejora el resultado.',
     noCut: true,
     colors: {
       light: {
@@ -174,7 +174,7 @@ export const DB = {
   aluminum: {
     name: 'Aluminio anodizado',
     icon: '🔩',
-    note: 'Solo aluminio anodizado o con recubrimiento especial. El aluminio puro NO se puede grabar con diodo 5W.',
+    note: 'Solo aluminio anodizado o con recubrimiento especial. El aluminio puro NO se puede grabar con láser diodo.',
     noCut: true,
     colors: {
       light: {
