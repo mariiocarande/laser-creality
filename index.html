@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Creality Falcon 5W — Laser Prep Studio</title>
+<title>Laser Prep Studio</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -23,7 +23,7 @@
       </svg>
       <div class="logo-info">
         <div class="logo-title">Laser Prep Studio</div>
-        <div class="logo-sub">Creality Falcon 5W</div>
+        <div class="logo-sub" id="header-machine">Creality Falcon 5W</div>
       </div>
     </div>
     <div class="status">
@@ -57,7 +57,10 @@
               <b id="thumb-name">—</b><br>
               <span id="thumb-size"></span>
             </div>
-            <button id="change-btn">Cambiar</button>
+            <div id="thumb-actions">
+              <button id="change-btn">Cambiar</button>
+              <button id="remove-btn">Quitar</button>
+            </div>
           </div>
         </div>
       </div>
@@ -69,6 +72,12 @@
           <span class="panel-hd-txt">Configuración de material</span>
         </div>
         <div class="panel-body">
+
+          <div class="sec-lbl">Equipo láser</div>
+          <div class="machine-wrap">
+            <select id="machine-select" class="machine-select"></select>
+            <div class="machine-specs" id="machine-specs"></div>
+          </div>
 
           <div class="sec-lbl">Material</div>
           <div class="mat-grid" id="mat-grid"></div>
@@ -182,7 +191,7 @@
       <div class="panel" id="results-panel">
         <div class="panel-hd">
           <span class="panel-hd-ico">📊</span>
-          <span class="panel-hd-txt">Parámetros recomendados — Falcon 5W</span>
+          <span class="panel-hd-txt" id="results-panel-hd-txt">Parámetros — Creality Falcon 5W</span>
         </div>
         <div class="panel-body">
 
@@ -221,7 +230,7 @@
 
           <div id="no-cut-warn" class="note-box">
             <strong>⚠ Corte no recomendado</strong><br>
-            Este material no puede ser cortado con una láser de 5W. Solo modo grabado disponible.
+            Este material no puede ser cortado con láser diodo. Solo modo grabado disponible.
           </div>
 
           <div class="note-box" id="note-box">

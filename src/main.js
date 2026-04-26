@@ -5,9 +5,15 @@ import {
   toGray, floydSteinberg, applyThreshold,
   sobelEdges, traceContours, edgesToSVG,
 } from './imageProcessing.js'
-import { buildMaterialGrid, buildColorOpts, updateSettingsDisplay } from './ui.js'
+import { buildMachineSelector, buildMaterialGrid, buildColorOpts, updateSettingsDisplay, updateMachineInfo } from './ui.js'
 
 // ── STATE SETTERS ──────────────────────────────────────────────
+
+function setMachine(key) {
+  state.machine = key
+  updateMachineInfo()
+  updateSettingsDisplay()
+}
 
 function setMaterial(key) {
   state.material = key
@@ -83,6 +89,36 @@ function handleFile(file) {
     document.getElementById('proc-btn').disabled = false
   }
   reader.readAsDataURL(file)
+}
+
+function removeFile() {
+  state.originalSrc  = null
+  state.processedSrc = null
+  state.svgSrc       = null
+  state.outputWidth  = 0
+  state.outputHeight = 0
+  state.pathCount    = 0
+  state.activeTab    = 'original'
+
+  document.getElementById('file-input').value = ''
+  document.getElementById('thumb-row').style.display = 'none'
+  document.getElementById('drop-zone').style.display = ''
+
+  const img   = document.getElementById('prev-img')
+  const empty = document.getElementById('prev-empty')
+  img.src             = ''
+  img.style.display   = 'none'
+  empty.style.display = 'block'
+  empty.querySelector('.prev-empty-txt').textContent = 'Sin imagen cargada'
+
+  document.querySelectorAll('.prev-tab').forEach(t =>
+    t.classList.toggle('on', t.dataset.tab === 'original')
+  )
+
+  document.getElementById('proc-btn').disabled     = true
+  document.getElementById('dl-btn').disabled       = true
+  document.getElementById('svg-dl-btn').disabled   = true
+  document.getElementById('output-info').style.display = 'none'
 }
 
 function showOriginal() {
@@ -225,6 +261,7 @@ function downloadSVG() {
 // ── INIT ──────────────────────────────────────────────────────
 
 function init() {
+  buildMachineSelector(setMachine)
   buildMaterialGrid(setMaterial)
   buildColorOpts(setColor)
   updateSettingsDisplay()
@@ -245,6 +282,7 @@ function init() {
   })
   fileInput.addEventListener('change', e => handleFile(e.target.files[0]))
   document.getElementById('change-btn').addEventListener('click', () => fileInput.click())
+  document.getElementById('remove-btn').addEventListener('click', removeFile)
 
   // Mode buttons
   document.querySelectorAll('.mode-btn').forEach(btn => {

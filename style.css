@@ -187,6 +187,7 @@ header {
   cursor: pointer;
   width: 100%;
   height: 100%;
+  z-index: 1;
 }
 
 .up-ico {
@@ -231,16 +232,29 @@ header {
 #thumb-info {
   font-size: 11px;
   color: var(--text2);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 #thumb-info b {
   color: var(--text);
   font-family: var(--fm);
   font-size: 10px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#thumb-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 #change-btn {
-  margin-left: auto;
+  margin-left: 0;
   background: transparent;
   border: 1px solid var(--border2);
   color: var(--text3);
@@ -255,6 +269,23 @@ header {
 #change-btn:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+#remove-btn {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--text3);
+  font-size: 10px;
+  font-family: var(--fm);
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+#remove-btn:hover {
+  border-color: #e05555;
+  color: #e05555;
 }
 
 /* ── SECTION LABEL ── */
@@ -275,6 +306,76 @@ header {
   flex: 1;
   height: 1px;
   background: var(--border);
+}
+
+/* ── MACHINE SELECTOR ── */
+.machine-wrap {
+  margin-bottom: 18px;
+}
+
+.machine-select {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: var(--fm);
+  font-size: 11px;
+  padding: 10px 36px 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238ca0ad' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.machine-select:hover {
+  border-color: var(--accent);
+}
+
+.machine-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--glow);
+}
+
+.machine-select option {
+  background: #111820;
+  color: var(--text);
+}
+
+.machine-specs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.machine-badge {
+  font-family: var(--fm);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.machine-badge.power {
+  color: var(--accent);
+  border-color: rgba(255, 107, 26, 0.45);
+  background: rgba(255, 107, 26, 0.08);
+}
+
+.machine-badge.area {
+  color: var(--text3);
+  border-color: var(--border);
+  background: var(--bg3);
+  font-weight: 400;
 }
 
 /* ── MATERIAL GRID ── */
