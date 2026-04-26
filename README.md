@@ -1,9 +1,11 @@
-# Laser Prep Studio — Creality Falcon 5W
+# Laser Prep Studio
 
-Herramienta web para preparar imágenes y obtener parámetros de grabado/corte optimizados para la grabadora láser **Creality Falcon 5W** (diodo 5W).
+Herramienta web para preparar imágenes y obtener parámetros de grabado/corte optimizados para grabadoras láser de diodo. Soporta múltiples marcas y modelos con escalado automático de parámetros.
 
 ## Características
 
+- **10 equipos láser** soportados de Creality, Sculpfun, xTool, Atomstack y Ortur
+- **Selector de máquina** — cambia de equipo y los parámetros se recalculan automáticamente
 - **7 materiales** soportados con 3 tonos cada uno
 - **Parámetros recomendados** (velocidad, potencia, pasadas, DPI, intervalo, aire asistido)
 - **Procesamiento de imagen** con algoritmo Floyd-Steinberg para grabado
@@ -32,18 +34,34 @@ npm run dev      # servidor local en http://localhost:5173
 npm run build    # compila a dist/
 ```
 
+## Equipos soportados
+
+| Marca      | Modelo          | Potencia | Área de trabajo   |
+|------------|-----------------|----------|-------------------|
+| Creality   | Falcon 5W       | 5 W      | 400 × 415 mm      |
+| Creality   | Falcon2 22W     | 22 W     | 400 × 415 mm      |
+| Sculpfun   | S9              | 5.5 W    | 410 × 420 mm      |
+| Sculpfun   | S10             | 10 W     | 410 × 420 mm      |
+| Sculpfun   | S30 Pro Max     | 20 W     | 600 × 600 mm      |
+| xTool      | D1 Pro 20W      | 20 W     | 430 × 390 mm      |
+| xTool      | S1 40W          | 40 W     | 498 × 319 mm      |
+| Atomstack  | A20 Pro         | 20 W     | 400 × 400 mm      |
+| Atomstack  | X20 Pro         | 20 W     | 800 × 800 mm      |
+| Ortur      | LM3             | 10 W     | 400 × 400 mm      |
+
 ## Uso
 
 1. Abrí la app en el navegador (`npm run dev` o `dist/index.html`)
-2. Arrastrá o seleccioná una imagen
-3. Elegí el material, el tono y el modo de operación
-4. Ajustá los parámetros según el modo:
+2. Seleccioná tu **equipo láser** en el selector de la barra lateral
+3. Arrastrá o seleccioná una imagen
+4. Elegí el material, el tono y el modo de operación
+5. Ajustá los parámetros según el modo:
    - **Grabar** — contraste, brillo, dithering
    - **Cortar** — contraste, brillo, umbral (threshold), grosor
    - **Bordes SVG** — contraste, brillo, sensibilidad de bordes
-5. Presioná **⚡ Procesar imagen**
-6. Copiá los parámetros mostrados a tu software de grabado
-7. Descargá el resultado:
+6. Presioná **⚡ Procesar imagen**
+7. Copiá los parámetros mostrados a tu software de grabado
+8. Descargá el resultado:
    - Modos Grabar / Cortar → **⬇ Descargar imagen procesada** (PNG)
    - Modo Bordes SVG → **⬇ Descargar SVG para láser** (SVG vectorial)
 
@@ -57,7 +75,8 @@ laser-prep-falcon5w/
 ├── package.json
 ├── src/
 │   ├── main.js        # Entry point — event wiring y orquestación
-│   ├── db.js          # Base de datos de materiales y parámetros
+│   ├── machines.js    # Registro de equipos láser y escalado de parámetros
+│   ├── db.js          # Base de datos de materiales y parámetros base
 │   ├── state.js       # Estado global de la app
 │   ├── imageProcessing.js  # Floyd-Steinberg, Sobel, trazado de contornos, RDP
 │   └── ui.js          # Construcción dinámica de grillas y display de parámetros
@@ -84,9 +103,9 @@ laser-prep-falcon5w/
 4. **Simplificación Ramer-Douglas-Peucker** (ε = 1 px) — reduce puntos redundantes sin perder forma
 5. **Exportación SVG** con `stroke="#000000" fill="none" stroke-width="0.1"` — trazo fino (hairline) compatible con LightBurn y LaserGRBL como capa de trazo vectorial
 
-## Parámetros — referencia rápida (Falcon 5W)
+## Parámetros — referencia rápida (Creality Falcon 5W)
 
-> Valores de referencia. **Siempre hacer una prueba en un trozo del mismo material antes de grabar la pieza final.** Los valores pueden variar según el modelo exacto del material, el enfoque del láser y las condiciones ambientales.
+> Valores de referencia para el Falcon 5W. Para otros equipos, la app escala automáticamente los parámetros. **Siempre hacer una prueba en un trozo del mismo material antes de grabar la pieza final.** Los valores pueden variar según el modelo exacto del material, el enfoque del láser y las condiciones ambientales.
 
 | Material           | Tono   | Modo    | Velocidad | Potencia |
 |--------------------|--------|---------|-----------|----------|
