@@ -32,6 +32,22 @@
     </div>
   </header>
 
+  <!-- TOOLBAR: TABS + MACHINE -->
+  <div class="toolbar">
+    <nav class="tool-tabs" role="tablist" aria-label="Herramientas">
+      <button class="tool-tab on" role="tab" data-view="image">🖼 Preparar imagen</button>
+      <button class="tool-tab" role="tab" data-view="box">📦 Cajas</button>
+      <button class="tool-tab" role="tab" data-view="custom">✨ Personalizar</button>
+    </nav>
+    <div class="machine-wrap">
+      <label class="machine-lbl" for="machine-select">Equipo láser</label>
+      <select id="machine-select" class="machine-select"></select>
+      <div class="machine-specs" id="machine-specs"></div>
+    </div>
+  </div>
+
+  <!-- VIEW: IMAGE PREP -->
+  <section class="view" data-view="image">
   <!-- MAIN GRID -->
   <div class="grid">
 
@@ -72,12 +88,6 @@
           <span class="panel-hd-txt">Configuración de material</span>
         </div>
         <div class="panel-body">
-
-          <div class="sec-lbl">Equipo láser</div>
-          <div class="machine-wrap">
-            <select id="machine-select" class="machine-select"></select>
-            <div class="machine-specs" id="machine-specs"></div>
-          </div>
 
           <div class="sec-lbl">Material</div>
           <div class="mat-grid" id="mat-grid"></div>
@@ -250,6 +260,203 @@
 
     </div><!-- /right-col -->
   </div><!-- /grid -->
+  </section>
+
+  <!-- VIEW: BOX GENERATOR -->
+  <section class="view" data-view="box" hidden>
+    <div class="grid">
+      <div>
+        <div class="panel">
+          <div class="panel-hd">
+            <span class="panel-hd-ico">📦</span>
+            <span class="panel-hd-txt">Generador de cajas</span>
+          </div>
+          <div class="panel-body">
+
+            <div class="sec-lbl">Medidas (mm)</div>
+            <div class="field-grid three">
+              <label class="field"><span class="field-lbl">Ancho</span>
+                <input class="num-input" id="box-width" type="number" inputmode="decimal" min="1" step="1" value="100"></label>
+              <label class="field"><span class="field-lbl">Fondo</span>
+                <input class="num-input" id="box-depth" type="number" inputmode="decimal" min="1" step="1" value="80"></label>
+              <label class="field"><span class="field-lbl">Alto</span>
+                <input class="num-input" id="box-height" type="number" inputmode="decimal" min="1" step="1" value="60"></label>
+            </div>
+            <div class="tog-row">
+              <span class="tog-lbl">Las medidas son interiores</span>
+              <button class="tog" id="box-inner" aria-label="Las medidas son interiores"></button>
+            </div>
+
+            <div class="sec-lbl">Material</div>
+            <div class="field">
+              <select id="box-material" class="machine-select" aria-label="Material"></select>
+            </div>
+            <div class="field">
+              <select id="box-tone" class="machine-select" aria-label="Tono"></select>
+            </div>
+            <div class="field-grid three">
+              <label class="field"><span class="field-lbl">Grosor</span>
+                <input class="num-input" id="box-thickness" type="number" inputmode="decimal" min="0.5" step="0.1" value="3"></label>
+              <label class="field"><span class="field-lbl">Diente</span>
+                <input class="num-input" id="box-finger" type="number" inputmode="decimal" min="2" step="1" value="10"></label>
+              <label class="field"><span class="field-lbl">Kerf</span>
+                <input class="num-input" id="box-kerf" type="number" inputmode="decimal" min="0" max="1" step="0.01" value="0.15"></label>
+            </div>
+            <p class="hint">Kerf = lo que el láser se come al cortar. Cortá un cuadrado de 100 mm, medilo y hacé (100 − medida) ÷ 2. Si la caja queda floja, subilo; si no encastra, bajalo.</p>
+
+            <div class="sec-lbl">Tapa</div>
+            <div class="choice-row three">
+              <button class="choice-btn lid-btn on" data-lid="open">Abierta</button>
+              <button class="choice-btn lid-btn" data-lid="closed">Encastrada</button>
+              <button class="choice-btn lid-btn" data-lid="lift">Suelta</button>
+            </div>
+            <p class="hint">Encastrada: caja cerrada con dientes en la tapa. Suelta: tapa lisa con un tope que se pega por debajo para que no se corra.</p>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="right-col">
+        <div class="panel">
+          <div class="panel-hd">
+            <span class="panel-hd-ico">👁</span>
+            <span class="panel-hd-txt">Plano de corte</span>
+          </div>
+          <div class="sheet-area" id="box-preview"></div>
+          <div id="box-info" class="output-info" style="display:none"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-hd">
+            <span class="panel-hd-ico">📊</span>
+            <span class="panel-hd-txt" id="box-params-title">Corte</span>
+          </div>
+          <div class="panel-body">
+            <div class="settings-grid four">
+              <div class="s-card hi"><div class="s-lbl">Velocidad</div><div class="s-val" id="box-val-speed">—</div><div class="s-unit">mm/min</div></div>
+              <div class="s-card hi"><div class="s-lbl">Potencia</div><div class="s-val" id="box-val-power">—</div><div class="s-unit">%</div></div>
+              <div class="s-card"><div class="s-lbl">Pasadas</div><div class="s-val" id="box-val-passes">—</div><div class="s-unit">veces</div></div>
+              <div class="s-card"><div class="s-lbl">Aire asistido</div><div class="s-val" id="box-val-air" style="font-size:14px;padding-top:4px">—</div><div class="s-unit">recomendado</div></div>
+            </div>
+            <div class="note-box warn-box" id="box-warn" style="display:none"></div>
+            <div class="note-box">
+              <strong>📝 Nota: </strong>
+              El SVG sale en milímetros reales, con las piezas acomodadas en el área de tu máquina. Las líneas rojas son corte. Probá primero el encastre con una caja chica.
+            </div>
+            <button class="dl-btn" id="box-dl-btn" disabled>⬇ Descargar SVG de la caja</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIEW: PERSONALIZER -->
+  <section class="view" data-view="custom" hidden>
+    <div class="grid">
+      <div>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-hd">
+            <span class="panel-hd-ico">📁</span>
+            <span class="panel-hd-txt">Diseño base (opcional)</span>
+          </div>
+          <div class="panel-body">
+            <div class="drop-zone" id="custom-drop">
+              <input type="file" id="custom-file" accept=".svg,image/svg+xml,image/png,image/jpeg,image/webp">
+              <span class="up-ico">⬆</span>
+              <div class="up-title">Arrastrá tu diseño o hacé click</div>
+              <div class="up-sub">SVG (recomendado), PNG o JPG — máx. 20 MB</div>
+            </div>
+            <div class="file-row" id="custom-file-row" style="display:none">
+              <b id="custom-file-name"></b>
+              <button class="mini-btn danger" id="custom-remove">Quitar</button>
+            </div>
+            <div class="note-box warn-box" id="custom-file-error" style="display:none"></div>
+            <p class="hint" id="custom-raster-note" style="display:none">Las fotos y PNG van incrustados como imagen para grabar. Si tu programa no los toma, usá un SVG.</p>
+            <label class="field"><span class="field-lbl">Ancho del diseño (mm)</span>
+              <input class="num-input" id="custom-width" type="number" inputmode="decimal" min="1" step="1" value="60"></label>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-hd">
+            <span class="panel-hd-ico">✏️</span>
+            <span class="panel-hd-txt">Personalización</span>
+          </div>
+          <div class="panel-body">
+
+            <div class="sec-lbl">Nombres o textos</div>
+            <label class="field"><span class="field-lbl">Uno por línea — sale una pieza por cada uno</span>
+              <textarea class="text-input" id="custom-names" rows="4" placeholder="Sofía&#10;Carlos&#10;Mateo"></textarea></label>
+            <div class="field-grid two-one">
+              <label class="field"><span class="field-lbl">Letra</span>
+                <select id="custom-font" class="machine-select"></select></label>
+              <label class="field"><span class="field-lbl">Tamaño (mm)</span>
+                <input class="num-input" id="custom-font-size" type="number" inputmode="decimal" min="1" step="1" value="12"></label>
+            </div>
+            <div class="field-lbl">Posición del texto</div>
+            <div class="choice-row three">
+              <button class="choice-btn custom-pos-btn on" data-value="below">Abajo</button>
+              <button class="choice-btn custom-pos-btn" data-value="above">Arriba</button>
+              <button class="choice-btn custom-pos-btn" data-value="over">Encima</button>
+            </div>
+
+            <div class="sec-lbl">Contorno de corte</div>
+            <div class="choice-row four">
+              <button class="choice-btn custom-outline-btn" data-value="none">Sin</button>
+              <button class="choice-btn custom-outline-btn" data-value="rect">Recto</button>
+              <button class="choice-btn custom-outline-btn on" data-value="round">Redondo</button>
+              <button class="choice-btn custom-outline-btn" data-value="circle">Círculo</button>
+            </div>
+            <div class="field-grid two">
+              <label class="field" id="custom-margin-field"><span class="field-lbl">Margen (mm)</span>
+                <input class="num-input" id="custom-margin" type="number" inputmode="decimal" min="0" step="0.5" value="4"></label>
+              <label class="field" id="custom-radius-field"><span class="field-lbl">Radio esquinas (mm)</span>
+                <input class="num-input" id="custom-radius" type="number" inputmode="decimal" min="0" step="0.5" value="6"></label>
+            </div>
+            <div class="tog-row" id="custom-hole-row">
+              <span class="tog-lbl">Agujero para colgar</span>
+              <button class="tog" id="custom-hole" aria-label="Agujero para colgar"></button>
+            </div>
+            <label class="field" id="custom-hole-field"><span class="field-lbl">Diámetro del agujero (mm)</span>
+              <input class="num-input" id="custom-hole-d" type="number" inputmode="decimal" min="0.5" step="0.5" value="4"></label>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="right-col">
+        <div class="panel">
+          <div class="panel-hd">
+            <span class="panel-hd-ico">👁</span>
+            <span class="panel-hd-txt">Vista previa</span>
+          </div>
+          <div class="sheet-area">
+            <div class="prev-empty" id="custom-empty">
+              <span class="prev-empty-ico">✨</span>
+              <div class="prev-empty-txt">Cargá un diseño o escribí un nombre</div>
+            </div>
+            <div id="custom-preview" class="sheet-list"></div>
+          </div>
+          <div id="custom-info" class="output-info" style="display:none"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-hd">
+            <span class="panel-hd-ico">⬇</span>
+            <span class="panel-hd-txt">Exportar</span>
+          </div>
+          <div class="panel-body">
+            <div class="note-box warn-box" id="custom-warn" style="display:none"></div>
+            <div class="note-box">
+              <strong>📝 Nota: </strong>
+              Rojo = corte, negro = grabado. El texto sale convertido a trazos, así que no necesitás tener la letra instalada. Los parámetros de potencia y velocidad los ves en "Preparar imagen".
+            </div>
+            <button class="dl-btn" id="custom-dl-btn" disabled>⬇ Descargar SVG personalizado</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
 </div><!-- /app -->
 

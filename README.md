@@ -1,18 +1,30 @@
 # Laser Prep Studio
 
-Herramienta web para preparar imágenes y obtener parámetros de grabado/corte optimizados para grabadoras láser de diodo. Soporta múltiples marcas y modelos con escalado automático de parámetros.
+Herramientas web para grabadoras láser de diodo: preparar imágenes, generar cajas con encastre y personalizar diseños. Soporta múltiples marcas y modelos con escalado automático de parámetros. El equipo por defecto es la **Creality Falcon 5W**.
 
-## Características
+## Herramientas
 
-- **10 equipos láser** soportados de Creality, Sculpfun, xTool, Atomstack y Ortur
-- **Selector de máquina** — cambia de equipo y los parámetros se recalculan automáticamente
-- **7 materiales** soportados con 3 tonos cada uno
-- **Parámetros recomendados** (velocidad, potencia, pasadas, DPI, intervalo, aire asistido)
-- **Procesamiento de imagen** con algoritmo Floyd-Steinberg para grabado
-- **Modo corte** con umbral configurable para siluetas B/N
-- **Modo bordes SVG** — detección de contornos y exportación vectorial lista para grabar/cortar
-- **Vista previa** original vs. procesada en tiempo real
-- **Descarga** de imagen procesada (PNG) o vectores de borde (SVG) para LightBurn, LaserGRBL o Creality Laser
+La app se organiza en pestañas. El selector de **equipo láser** es global: al cambiarlo se recalculan los parámetros y el área de trabajo en todas.
+
+### 🖼 Preparar imagen
+- **7 materiales** con 3 tonos cada uno y **parámetros recomendados** (velocidad, potencia, pasadas, DPI, intervalo, aire asistido)
+- **Grabar** con dithering Floyd-Steinberg, **Cortar** con umbral para siluetas B/N y **Bordes SVG** con detección de contornos
+- Vista previa original vs. procesada y descarga en PNG o SVG
+
+### 📦 Cajas
+- Caja rectangular con **finger joints** (dientes), medidas exteriores o interiores
+- Grosor de material, ancho de diente y **compensación de kerf** configurables
+- Tapa **abierta**, **encastrada** (caja cerrada) o **suelta** (tapa lisa con tope interior)
+- Las piezas se acomodan solas en el área de la máquina; si no entran en una plancha se reparten en varias
+- Parámetros de corte según material y equipo, largo de corte y tiempo estimado
+- Exporta **SVG en milímetros reales** (trazo rojo = corte)
+
+### ✨ Personalizar
+- Cargá un diseño base (**SVG**, PNG o JPG) y definí su ancho final en mm — o trabajá solo con texto
+- Lista de **nombres, uno por línea**: se genera una pieza por nombre, todas en la misma plancha
+- 3 tipografías; el texto se exporta **convertido a trazos**
+- **Contorno de corte** recto, redondeado o circular, con margen y **agujero para colgar**
+- Exporta SVG en mm: rojo = corte, negro = grabado
 
 ## Materiales soportados
 
@@ -49,10 +61,10 @@ npm run build    # compila a dist/
 | Atomstack  | X20 Pro         | 20 W     | 800 × 800 mm      |
 | Ortur      | LM3             | 10 W     | 400 × 400 mm      |
 
-## Uso
+## Uso (Preparar imagen)
 
 1. Abrí la app en el navegador (`npm run dev` o `dist/index.html`)
-2. Seleccioná tu **equipo láser** en el selector de la barra lateral
+2. Seleccioná tu **equipo láser** en el selector de arriba (por defecto, Falcon 5W)
 3. Arrastrá o seleccioná una imagen
 4. Elegí el material, el tono y el modo de operación
 5. Ajustá los parámetros según el modo:
@@ -69,19 +81,31 @@ npm run build    # compila a dist/
 
 ```
 laser-prep-falcon5w/
-├── index.html         # Estructura HTML
+├── index.html         # Estructura HTML (una <section class="view"> por pestaña)
 ├── style.css          # Estilos (tema industrial dark, fuentes Orbitron + JetBrains Mono)
 ├── vite.config.js     # Configuración de Vite
 ├── package.json
 ├── src/
-│   ├── main.js        # Entry point — event wiring y orquestación
-│   ├── machines.js    # Registro de equipos láser y escalado de parámetros
-│   ├── db.js          # Base de datos de materiales y parámetros base
-│   ├── state.js       # Estado global de la app
+│   ├── main.js             # Entry point — pestañas y selector de equipo
+│   ├── state.js            # Estado global + suscripción a cambios de equipo
+│   ├── machines.js         # Registro de equipos láser y escalado de parámetros
+│   ├── db.js               # Base de datos de materiales y parámetros base
+│   ├── ui.js               # Grillas y display de parámetros (Preparar imagen)
 │   ├── imageProcessing.js  # Floyd-Steinberg, Sobel, trazado de contornos, RDP
-│   └── ui.js          # Construcción dinámica de grillas y display de parámetros
+│   ├── boxGeometry.js      # Geometría de cajas: dientes, esquinas y kerf
+│   ├── sheets.js           # Acomodo en planchas, armado y descarga de SVG
+│   └── tools/
+│       ├── imagePrep.js    # Pestaña Preparar imagen
+│       ├── boxTool.js      # Pestaña Cajas
+│       └── customTool.js   # Pestaña Personalizar
 └── README.md
 ```
+
+## Cómo se arma una caja
+
+Cada panel es un rectángulo cuyos cuatro bordes llevan un perfil macho, hembra o liso. Los dientes se reparten en una cantidad impar sobre el largo del borde menos las dos esquinas; cada esquina (un cuadrado del grosor del material) pertenece a un solo panel (frente/atrás), así las piezas nunca se pisan. El **kerf** se compensa agrandando cada contorno medio kerf hacia afuera, de modo que el encastre quede firme.
+
+Para medir tu kerf: cortá un cuadrado de 100 mm, medilo con calibre y calculá `(100 − medida) ÷ 2`.
 
 ## Procesamiento de imagen
 
@@ -132,6 +156,8 @@ laser-prep-falcon5w/
 - HTML5 + CSS3 + JavaScript (ES modules)
 - [Vite](https://vitejs.dev/) como build tool
 - Canvas API para procesamiento de imagen
+- [opentype.js](https://opentype.js.org/) para convertir texto a trazos
+- Tipografías vía [Fontsource](https://fontsource.org/): Pacifico, Bebas Neue, DM Sans
 - Google Fonts: [Orbitron](https://fonts.google.com/specimen/Orbitron), [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono), [DM Sans](https://fonts.google.com/specimen/DM+Sans)
 
 ## Licencia
