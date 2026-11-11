@@ -23,6 +23,12 @@ const box = {
 }
 
 let exportSvgs = []
+let viewer = null       // 3D viewer, loaded lazily so three.js stays out of the main bundle
+let lastResult = null
+let lidOpen = false
+
+// How each material is drawn in the 3D preview.
+const MATERIAL_LOOK = { wood: 'wood', plywood: 'wood', acrylic: 'acrylic', leather: 'matte', cardboard: 'matte' }
 
 const el = id => document.getElementById(id)
 
@@ -87,6 +93,8 @@ function update() {
   el('box-params-title').textContent = `Corte — ${machine.brand} ${machine.name}`
 
   const result = buildBox(box)
+  lastResult = result.error ? null : result
+  syncViewer()
   const preview = el('box-preview')
   const info = el('box-info')
   exportSvgs = []
@@ -138,6 +146,92 @@ function update() {
   el('box-dl-btn').disabled = exportSvgs.length === 0 || oversize.length > 0
 }
 
+function syncViewer() {
+  if (!viewer) return
+  if (!lastResult) { viewer.clear(); return }
+  viewer.setMaterial(DB[box.material].colors[box.tone].sw, MATERIAL_LOOK[box.material] || 'matte')
+  viewer.setBox(lastResult)
+  syncLidButton()
+}
+
+function setPressed(id, on) {
+  el(id).classList.toggle('on', on)
+  el(id).setAttribute('aria-pressed', String(on))
+}
+
+function syncLidButton() {
+  const hasLid = Boolean(viewer && viewer.hasLid())
+  el('box-3d-lid').disabled = !hasLid
+  if (!hasLid) {
+    lidOpen = false
+    setPressed('box-3d-lid', false)
+    el('box-3d-lid').textContent = 'Abrir tapa'
+  }
+}
+
+function bindViewerControls() {
+  viewer.onHiddenChange(names => { el('box-3d-showall').hidden = names.length === 0 })
+  el('box-3d-showall').addEventListener('click', () => viewer.showAll())
+
+  document.querySelectorAll('.box-cam-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.box-cam-btn').forEach(b => b.classList.toggle('on', b === btn))
+      viewer.setView(btn.dataset.cam)
+    })
+  })
+
+  el('box-3d-lid').addEventListener('click', () => {
+    lidOpen = !lidOpen
+    setPressed('box-3d-lid', lidOpen)
+    el('box-3d-lid').textContent = lidOpen ? 'Cerrar tapa' : 'Abrir tapa'
+    viewer.setLidOpen(lidOpen)
+  })
+
+  const toggles = {
+    'box-3d-rotate': on => viewer.setAutoRotate(on),
+    'box-3d-dims':   on => viewer.setDimensionsVisible(on),
+    'box-3d-grid':   on => viewer.setGridVisible(on),
+  }
+  Object.entries(toggles).forEach(([id, apply]) => {
+    el(id).addEventListener('click', () => {
+      const on = !el(id).classList.contains('on')
+      setPressed(id, on)
+      apply(on)
+    })
+  })
+
+  el('box-3d-png').addEventListener('click', () => {
+    const a = document.createElement('a')
+    a.download = 'caja_3d.png'
+    a.href = viewer.snapshot()
+    a.click()
+  })
+}
+
+async function loadViewer() {
+  const message = el('box-3d-msg')
+  try {
+    const { createBoxViewer } = await import('../box3d.js')
+    viewer = createBoxViewer(el('box-3d'))
+    message.style.display = 'none'
+    bindViewerControls()
+    syncViewer()
+  } catch (err) {
+    console.warn('3D preview unavailable', err)
+    message.querySelector('.prev-empty-txt').textContent =
+      'Tu navegador no pudo iniciar la vista 3D. Usá el plano de corte.'
+    document.querySelectorAll('#box-3d .chip').forEach(chip => { chip.disabled = true })
+  }
+}
+
+function setBoxView(view) {
+  document.querySelectorAll('.box-view-tab').forEach(tab =>
+    tab.classList.toggle('on', tab.dataset.boxview === view)
+  )
+  el('box-3d-wrap').hidden = view !== '3d'
+  el('box-preview').hidden = view !== 'sheet'
+}
+
 function onInput() {
   box.width       = readNumber('box-width', box.width)
   box.depth       = readNumber('box-depth', box.depth)
@@ -184,6 +278,16 @@ export function initBoxTool() {
     downloadSvgs(exportSvgs, name)
   })
 
+  document.querySelectorAll('.box-view-tab').forEach(tab => {
+    tab.addEventListener('click', () => setBoxView(tab.dataset.boxview))
+  })
+  el('sl-box-explode').addEventListener('input', e => {
+    const percent = parseInt(e.target.value, 10)
+    el('lbl-box-explode').textContent = `${percent}%`
+    if (viewer) viewer.setExplode(percent / 100)
+  })
+
   onMachineChange(update)
   update()
+  loadViewer()
 }

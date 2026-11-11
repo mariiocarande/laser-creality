@@ -320,9 +320,44 @@
         <div class="panel">
           <div class="panel-hd">
             <span class="panel-hd-ico">👁</span>
-            <span class="panel-hd-txt">Plano de corte</span>
+            <span class="panel-hd-txt">Vista previa</span>
           </div>
-          <div class="sheet-area" id="box-preview"></div>
+          <div class="prev-tabs">
+            <button class="prev-tab box-view-tab on" data-boxview="3d">Vista 3D</button>
+            <button class="prev-tab box-view-tab" data-boxview="sheet">Plano de corte</button>
+          </div>
+          <div id="box-3d-wrap">
+            <div class="viewer3d" id="box-3d">
+              <div class="prev-empty" id="box-3d-msg">
+                <div class="prev-empty-txt">Cargando vista 3D…</div>
+              </div>
+              <div class="viewer-bar top" role="group" aria-label="Vista de cámara">
+                <button class="chip box-cam-btn on" data-cam="perspective">Perspectiva</button>
+                <button class="chip box-cam-btn" data-cam="front">Frente</button>
+                <button class="chip box-cam-btn" data-cam="top">Planta</button>
+                <button class="chip box-cam-btn" data-cam="side">Lateral</button>
+              </div>
+              <div class="viewer-bar bottom">
+                <button class="chip" id="box-3d-lid" aria-pressed="false">Abrir tapa</button>
+                <button class="chip" id="box-3d-rotate" aria-pressed="false">Girar</button>
+                <button class="chip" id="box-3d-dims" aria-pressed="false">Cotas</button>
+                <button class="chip on" id="box-3d-grid" aria-pressed="true">Grilla</button>
+                <button class="chip" id="box-3d-png">PNG</button>
+              </div>
+              <button class="chip viewer-restore" id="box-3d-showall" hidden>Mostrar todas las piezas</button>
+            </div>
+            <div class="viewer-controls">
+              <div class="sl-group viewer-slider">
+                <div class="sl-top">
+                  <span class="sl-nm">Separar piezas</span>
+                  <span class="sl-val" id="lbl-box-explode">0%</span>
+                </div>
+                <input type="range" id="sl-box-explode" min="0" max="100" step="1" value="0" aria-label="Separar piezas">
+              </div>
+            </div>
+            <p class="hint viewer-hint">Arrastrá para girar · rueda o pellizco para zoom · click derecho (o dos dedos) para mover · click en una pieza para ocultarla</p>
+          </div>
+          <div class="sheet-area" id="box-preview" hidden></div>
           <div id="box-info" class="output-info" style="display:none"></div>
         </div>
 

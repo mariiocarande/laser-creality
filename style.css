@@ -1121,6 +1121,86 @@ input[type="range"]::-webkit-slider-thumb {
 
 .mini-btn.danger:hover { border-color: var(--red); color: var(--red); }
 
+/* ── 3D VIEWER ── */
+[hidden] { display: none !important; }
+
+.viewer3d {
+  position: relative;
+  height: 540px;
+  background: radial-gradient(circle at 50% 40%, #17222c, var(--bg) 75%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.viewer3d canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+
+.viewer3d canvas:active { cursor: grabbing; }
+
+.viewer-bar {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.viewer-bar.top { top: 12px; }
+.viewer-bar.bottom { bottom: 12px; justify-content: center; }
+
+.chip {
+  pointer-events: auto;
+  background: rgba(12, 19, 24, 0.82);
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  font-family: var(--fm);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 7px 11px;
+  border-radius: 999px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: all 0.2s;
+}
+
+.chip:hover:not(:disabled) { color: var(--text); border-color: var(--text3); }
+.chip.on { border-color: var(--accent); color: var(--accent); }
+.chip:disabled { opacity: 0.35; cursor: not-allowed; }
+.chip:focus-visible { outline: 2px solid var(--accent2); outline-offset: 2px; }
+
+.viewer-restore {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  border-color: var(--accent2);
+  color: var(--accent2);
+}
+
+.viewer-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  padding: 14px 18px 0;
+}
+
+.viewer-slider { flex: 1; margin-bottom: 0; }
+
+.viewer-hint { margin: 10px 18px 14px; }
+
 /* ── SHEET PREVIEW ── */
 .sheet-area {
   min-height: 320px;
@@ -1177,6 +1257,8 @@ input[type="range"]::-webkit-slider-thumb {
 @media (max-width: 560px) {
   .settings-grid,
   .settings-grid.four { grid-template-columns: repeat(2, 1fr); }
+  .viewer3d { height: 400px; }
+  .viewer-restore { top: auto; bottom: 52px; right: 50%; transform: translateX(50%); }
   .machine-wrap .machine-select { min-width: 0; width: 100%; }
   .mat-grid { grid-template-columns: repeat(4, 1fr); }
 }

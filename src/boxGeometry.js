@@ -187,6 +187,7 @@ export function buildBox(params) {
     return {
       id: p.id,
       name: p.name,
+      shape: p.points,   // nominal outline (no kerf), used by the 3D preview
       points,
       w: Math.max(...points.map(q => q[0])),
       h: Math.max(...points.map(q => q[1])),
@@ -196,6 +197,8 @@ export function buildBox(params) {
 
   return {
     panels: finished,
+    thickness: t,
+    lidClearance: LID_CLEARANCE,
     outer: { width: W, depth: D, height: H },
     inner: { width: W - 2 * t, depth: D - 2 * t, height: H - t - (hasJointedTop ? t : 0) },
   }

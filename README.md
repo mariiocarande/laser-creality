@@ -15,6 +15,7 @@ La app se organiza en pestañas. El selector de **equipo láser** es global: al 
 - Caja rectangular con **finger joints** (dientes), medidas exteriores o interiores
 - Grosor de material, ancho de diente y **compensación de kerf** configurables
 - Tapa **abierta**, **encastrada** (caja cerrada) o **suelta** (tapa lisa con tope interior)
+- **Vista 3D interactiva** (three.js) de la caja armada: girar, zoom y mover; vistas de perspectiva, frente, planta y lateral; separar las piezas, abrir la tapa con animación, giro automático, cotas, grilla, ocultar piezas con un click y exportar la vista a PNG. El material elegido cambia el aspecto (veta de madera, acrílico translúcido)
 - Las piezas se acomodan solas en el área de la máquina; si no entran en una plancha se reparten en varias
 - Parámetros de corte según material y equipo, largo de corte y tiempo estimado
 - Exporta **SVG en milímetros reales** (trazo rojo = corte)
@@ -93,6 +94,7 @@ laser-prep-falcon5w/
 │   ├── ui.js               # Grillas y display de parámetros (Preparar imagen)
 │   ├── imageProcessing.js  # Floyd-Steinberg, Sobel, trazado de contornos, RDP
 │   ├── boxGeometry.js      # Geometría de cajas: dientes, esquinas y kerf
+│   ├── box3d.js            # Vista 3D de la caja (three.js, se carga bajo demanda)
 │   ├── sheets.js           # Acomodo en planchas, armado y descarga de SVG
 │   └── tools/
 │       ├── imagePrep.js    # Pestaña Preparar imagen
@@ -156,6 +158,7 @@ Para medir tu kerf: cortá un cuadrado de 100 mm, medilo con calibre y calculá 
 - HTML5 + CSS3 + JavaScript (ES modules)
 - [Vite](https://vitejs.dev/) como build tool
 - Canvas API para procesamiento de imagen
+- [three.js](https://threejs.org/) para la vista 3D de las cajas
 - [opentype.js](https://opentype.js.org/) para convertir texto a trazos
 - Tipografías vía [Fontsource](https://fontsource.org/): Pacifico, Bebas Neue, DM Sans
 - Google Fonts: [Orbitron](https://fonts.google.com/specimen/Orbitron), [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono), [DM Sans](https://fonts.google.com/specimen/DM+Sans)

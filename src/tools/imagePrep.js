@@ -104,7 +104,7 @@ function removeFile() {
   empty.style.display = 'block'
   empty.querySelector('.prev-empty-txt').textContent = 'Sin imagen cargada'
 
-  document.querySelectorAll('.prev-tab').forEach(t =>
+  document.querySelectorAll('.prev-tab[data-tab]').forEach(t =>
     t.classList.toggle('on', t.dataset.tab === 'original')
   )
 
@@ -121,14 +121,14 @@ function showOriginal() {
   img.src             = state.originalSrc
   img.style.display   = 'block'
   state.activeTab     = 'original'
-  document.querySelectorAll('.prev-tab').forEach(t =>
+  document.querySelectorAll('.prev-tab[data-tab]').forEach(t =>
     t.classList.toggle('on', t.dataset.tab === 'original')
   )
 }
 
 function switchTab(tab) {
   state.activeTab = tab
-  document.querySelectorAll('.prev-tab').forEach(t =>
+  document.querySelectorAll('.prev-tab[data-tab]').forEach(t =>
     t.classList.toggle('on', t.dataset.tab === tab)
   )
 
@@ -288,7 +288,7 @@ export function initImagePrep() {
   })
 
   // Tabs
-  document.querySelectorAll('.prev-tab').forEach(btn => {
+  document.querySelectorAll('.prev-tab[data-tab]').forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab))
   })
 
