@@ -304,13 +304,24 @@
             </div>
             <p class="hint">Kerf = lo que el láser se come al cortar. Cortá un cuadrado de 100 mm, medilo y hacé (100 − medida) ÷ 2. Si la caja queda floja, subilo; si no encastra, bajalo.</p>
 
+            <div class="sec-lbl">Divisores</div>
+            <div class="field-grid two">
+              <label class="field"><span class="field-lbl">Columnas (a lo ancho)</span>
+                <input class="num-input" id="box-cols" type="number" inputmode="numeric" min="1" max="8" step="1" value="1"></label>
+              <label class="field"><span class="field-lbl">Filas (a lo hondo)</span>
+                <input class="num-input" id="box-rows" type="number" inputmode="numeric" min="1" max="8" step="1" value="1"></label>
+            </div>
+            <p class="hint">Los divisores se encastran entre sí en cruz y van sueltos dentro de la caja, así los podés sacar.</p>
+
             <div class="sec-lbl">Tapa</div>
             <div class="choice-row three">
               <button class="choice-btn lid-btn on" data-lid="open">Abierta</button>
               <button class="choice-btn lid-btn" data-lid="closed">Encastrada</button>
               <button class="choice-btn lid-btn" data-lid="lift">Suelta</button>
+              <button class="choice-btn lid-btn" data-lid="slide">Corrediza</button>
+              <button class="choice-btn lid-btn" data-lid="hinge">Bisagra</button>
             </div>
-            <p class="hint">Encastrada: caja cerrada con dientes en la tapa. Suelta: tapa lisa con un tope que se pega por debajo para que no se corra.</p>
+            <p class="hint" id="box-lid-hint">Sin tapa.</p>
 
           </div>
         </div>

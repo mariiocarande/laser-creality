@@ -3,7 +3,7 @@ import { state, onMachineChange } from '../state.js'
 import { MACHINES, applyMachine } from '../machines.js'
 import { buildBox } from '../boxGeometry.js'
 import {
-  packSheets, pointsToPath, rotatePoints,
+  packSheets, pointsToPath, rotatePoints, rotateHoles, holesToMarkup,
   buildSheetSvg, renderSheetPreviews, downloadSvgs,
 } from '../sheets.js'
 
@@ -16,7 +16,9 @@ const box = {
   thickness: 3,
   fingerWidth: 10,
   kerf: 0.15,
-  lid: 'open',        // 'open' | 'closed' | 'lift'
+  lid: 'open',        // one of LID_TYPES in boxGeometry.js
+  cols: 1,
+  rows: 1,
   innerDims: false,
   material: 'plywood',
   tone: 'light',
@@ -26,6 +28,14 @@ let exportSvgs = []
 let viewer = null       // 3D viewer, loaded lazily so three.js stays out of the main bundle
 let lastResult = null
 let lidOpen = false
+
+const LID_HINTS = {
+  open:   'Sin tapa.',
+  closed: 'Caja cerrada: la tapa lleva dientes y se pega con el resto.',
+  lift:   'Tapa lisa que se apoya arriba, con un tope que se pega por debajo para que no se corra.',
+  slide:  'La tapa entra por el frente y corre entre dos guías que se pegan a cada lateral. El frente queda más bajo.',
+  hinge:  'La tapa tiene dos orejas que giran dentro de un agujero en cada lateral: hay que colocarla mientras armás la caja. Se apoya en dos listones pegados.',
+}
 
 // How each material is drawn in the 3D preview.
 const MATERIAL_LOOK = { wood: 'wood', plywood: 'wood', acrylic: 'acrylic', leather: 'matte', cardboard: 'matte' }
@@ -111,7 +121,9 @@ function update() {
 
   const sheetPlacements = sheets.map(sheet => sheet.map(p => {
     const points = p.rotated ? rotatePoints(p.item.points, p.item.h) : p.item.points
-    return { x: p.x, y: p.y, w: p.w, h: p.h, label: p.item.name, cut: `<path d="${pointsToPath(points)}"/>` }
+    const holes = p.rotated ? rotateHoles(p.item.holes, p.item.h) : p.item.holes
+    const cut = `<path d="${pointsToPath(points)}"/>${holesToMarkup(holes)}`
+    return { x: p.x, y: p.y, w: p.w, h: p.h, label: p.item.name, cut }
   }))
 
   exportSvgs = sheetPlacements.map(pl => buildSheetSvg(pl, machine.area.w, machine.area.h))
@@ -121,10 +133,12 @@ function update() {
   )
 
   const cutLength = result.panels.reduce((sum, p) => sum + p.cutLength, 0)
-  const { outer, inner } = result
+  const { outer, inner, cells } = result
+  const cellCount = cells.cols * cells.rows
   const size = d => `${d.width.toFixed(1)} × ${d.depth.toFixed(1)} × ${d.height.toFixed(1)} mm`
   let html =
     `Exterior <strong>${size(outer)}</strong> &nbsp;·&nbsp; Interior <strong>${size(inner)}</strong><br>` +
+    (cellCount > 1 ? `${cellCount} compartimentos (${cells.cols} × ${cells.rows}) &nbsp;·&nbsp; ` : '') +
     `${result.panels.length} piezas &nbsp;·&nbsp; ${sheets.length} plancha${sheets.length === 1 ? '' : 's'} de ` +
     `${machine.area.w} × ${machine.area.h} mm &nbsp;·&nbsp; ${(cutLength / 1000).toFixed(2)} m de corte`
   if (params) html += ` &nbsp;·&nbsp; ${formatMinutes((cutLength / params.speed) * params.passes)}`
@@ -239,6 +253,8 @@ function onInput() {
   box.thickness   = readNumber('box-thickness', box.thickness)
   box.fingerWidth = Math.max(2, readNumber('box-finger', box.fingerWidth))
   box.kerf        = Math.min(1, readNumber('box-kerf', box.kerf))
+  box.cols        = readNumber('box-cols', box.cols)
+  box.rows        = readNumber('box-rows', box.rows)
   update()
 }
 
@@ -246,7 +262,7 @@ export function initBoxTool() {
   buildMaterialOptions()
   buildToneOptions()
 
-  ;['box-width', 'box-depth', 'box-height', 'box-thickness', 'box-finger', 'box-kerf']
+  ;['box-width', 'box-depth', 'box-height', 'box-thickness', 'box-finger', 'box-kerf', 'box-cols', 'box-rows']
     .forEach(id => el(id).addEventListener('input', onInput))
 
   el('box-inner').addEventListener('click', () => {
@@ -259,6 +275,7 @@ export function initBoxTool() {
     btn.addEventListener('click', () => {
       box.lid = btn.dataset.lid
       document.querySelectorAll('.lid-btn').forEach(b => b.classList.toggle('on', b === btn))
+      el('box-lid-hint').textContent = LID_HINTS[box.lid]
       update()
     })
   })

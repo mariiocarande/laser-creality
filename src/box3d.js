@@ -1,5 +1,6 @@
 // Interactive 3D preview of the assembled box (three.js).
 // Box space: X = width, Y = height (up), Z = depth; the front faces +Z.
+// Panel placement comes from buildBox(), so the model always matches the cut file.
 
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
@@ -20,29 +21,10 @@ const VIEW_DIRECTIONS = {
   side:  new THREE.Vector3(1, 0, 0),
 }
 
-const LAY_FLAT = new THREE.Euler(-Math.PI / 2, 0, 0)
-const STAND_SIDEWAYS = new THREE.Euler(0, -Math.PI / 2, 0)
-const UPRIGHT = new THREE.Euler(0, 0, 0)
-
-// Where each panel sits once assembled, and which way it moves when exploded.
-// `hinged` panels swing open around the top-back edge of the box.
-function placementFor(id, { W, D, H, t, clearance }) {
-  switch (id) {
-    case 'bottom':  return { rotation: LAY_FLAT,       position: [0, 0, D],     normal: [0, -1, 0] }
-    case 'top':     return { rotation: LAY_FLAT,       position: [0, H - t, D], normal: [0, 1, 0], hinged: true }
-    case 'front':   return { rotation: UPRIGHT,        position: [0, 0, D - t], normal: [0, 0, 1] }
-    case 'back':    return { rotation: UPRIGHT,        position: [0, 0, 0],     normal: [0, 0, -1] }
-    case 'left':    return { rotation: STAND_SIDEWAYS, position: [t, 0, 0],     normal: [-1, 0, 0] }
-    case 'right':   return { rotation: STAND_SIDEWAYS, position: [W, 0, 0],     normal: [1, 0, 0] }
-    case 'lid':     return { rotation: LAY_FLAT,       position: [0, H, D],     normal: [0, 1, 0], hinged: true }
-    case 'lid-lip': return {
-      rotation: LAY_FLAT,
-      position: [t + clearance / 2, H - t, D - t - clearance / 2],
-      normal: [0, 1, 0],
-      hinged: true,
-    }
-    default: return null
-  }
+const ORIENTATIONS = {
+  flat:     new THREE.Euler(-Math.PI / 2, 0, 0),
+  upright:  new THREE.Euler(0, 0, 0),
+  sideways: new THREE.Euler(0, -Math.PI / 2, 0),
 }
 
 function createGrainTexture() {
@@ -153,6 +135,7 @@ export function createBoxViewer(container) {
   let frameKey = ''
   let hasSize = false
   let gridVisible = true
+  let slideDistance = 0
   let onHiddenChange = () => {}
 
   // Animated values: `current` eases toward `target` inside the render loop.
@@ -193,15 +176,16 @@ export function createBoxViewer(container) {
   function applyPose() {
     if (!dims) return
     const distance = anim.explode.current * maxDim * EXPLODE_DISTANCE
-    parts.forEach(({ object, base, normal, hinged, lidOffset }) => {
-      // Hinged groups sit on the top-back edge, so rotating them opens the lid.
-      const lift = hinged ? lidOffset * distance : distance
+    parts.forEach(({ object, base, normal, factor, motion }) => {
+      const lift = distance * factor
       object.position.set(
         base[0] + normal[0] * lift,
         base[1] + normal[1] * lift,
         base[2] + normal[2] * lift,
       )
-      if (hinged) object.rotation.x = -anim.lid.current * LID_OPEN_ANGLE
+      // Hinged groups sit on the hinge line, so rotating them opens the lid.
+      if (motion === 'hinge') object.rotation.x = -anim.lid.current * LID_OPEN_ANGLE
+      if (motion === 'slide') object.position.z += anim.lid.current * slideDistance
     })
 
     const floorY = -dims.H / 2 - distance - 0.3
@@ -288,38 +272,37 @@ export function createBoxViewer(container) {
     clear()
 
     const { width: W, depth: D, height: H } = result.outer
-    dims = { W, D, H, t: result.thickness, clearance: result.lidClearance }
+    dims = { W, D, H, t: result.thickness }
     maxDim = Math.max(W, D, H)
     boxGroup.position.set(-W / 2, -H / 2, -D / 2)
-    const hinge = [0, H, 0]
+
+    const lidMotion = result.lidMotion
+    const hinge = lidMotion && lidMotion.type === 'hinge' ? [0, lidMotion.pivot[0], lidMotion.pivot[1]] : null
+    slideDistance = lidMotion && lidMotion.type === 'slide' ? lidMotion.distance : 0
 
     result.panels.forEach(panel => {
-      const placement = placementFor(panel.id, dims)
-      if (!placement) return
-
+      const { place } = panel
       const shape = new THREE.Shape(panel.shape.map(([x, y]) => new THREE.Vector2(x, y)))
-      const geometry = new THREE.ExtrudeGeometry(shape, { depth: dims.t, bevelEnabled: false })
+      panel.shapeHoles.forEach(h => {
+        shape.holes.push(new THREE.Path().absarc(h.cx, h.cy, h.r, 0, Math.PI * 2, true))
+      })
+      const geometry = new THREE.ExtrudeGeometry(shape, { depth: dims.t, bevelEnabled: false, curveSegments: 24 })
       const mesh = new THREE.Mesh(geometry, [faceMaterial, edgeMaterial])
       mesh.castShadow = true
       mesh.receiveShadow = true
+      mesh.userData.partId = panel.id
 
       const body = new THREE.Group()
       body.add(mesh, new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 30), outlineMaterial))
-      body.rotation.copy(placement.rotation)
+      body.rotation.copy(ORIENTATIONS[place.orient])
 
       // Hinged panels live inside a pivot group placed on the hinge line.
+      const motion = place.motion && lidMotion ? lidMotion.type : null
+      const isHinged = motion === 'hinge'
       const object = new THREE.Group()
-      const base = placement.hinged ? hinge : placement.position
-      if (placement.hinged) {
-        body.position.set(
-          placement.position[0] - hinge[0],
-          placement.position[1] - hinge[1],
-          placement.position[2] - hinge[2],
-        )
-      }
+      if (isHinged) body.position.set(...place.position.map((v, i) => v - hinge[i]))
       object.add(body)
       object.visible = !hiddenIds.has(panel.id)
-      mesh.userData.partId = panel.id
 
       boxGroup.add(object)
       parts.push({
@@ -327,14 +310,14 @@ export function createBoxViewer(container) {
         name: panel.name,
         object,
         mesh,
-        base,
-        normal: placement.normal,
-        hinged: Boolean(placement.hinged),
-        lidOffset: panel.id === 'lid' ? 1.6 : panel.id === 'lid-lip' ? 1.25 : 1,
+        base: isHinged ? hinge : place.position,
+        normal: place.normal,
+        factor: place.explode || 1,
+        motion,
       })
     })
 
-    if (!parts.some(p => p.hinged)) anim.lid.current = anim.lid.target = 0
+    if (!parts.some(p => p.motion)) anim.lid.current = anim.lid.target = 0
 
     rebuildStage()
     rebuildDimensions()
@@ -414,7 +397,7 @@ export function createBoxViewer(container) {
     clear() { clear(); dims = null; render() },
     setExplode(value) { anim.explode.target = anim.explode.current = value; applyPose(); render() },
     setLidOpen(open) { anim.lid.target = open ? 1 : 0; startLoop() },
-    hasLid: () => parts.some(p => p.hinged),
+    hasLid: () => parts.some(p => p.motion),
     setAutoRotate(on) { controls.autoRotate = on; if (on) startLoop() },
     setDimensionsVisible(on) { dimensionGroup.visible = on; render() },
     setGridVisible(on) { gridVisible = on; if (grid) grid.visible = on; render() },

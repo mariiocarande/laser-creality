@@ -18,6 +18,14 @@ export function rotatePoints(points, h) {
   return points.map(([x, y]) => [h - y, x])
 }
 
+export function rotateHoles(holes, h) {
+  return holes.map(({ cx, cy, r }) => ({ cx: h - cy, cy: cx, r }))
+}
+
+export function holesToMarkup(holes) {
+  return holes.map(h => `<circle cx="${fmt(h.cx)}" cy="${fmt(h.cy)}" r="${fmt(h.r)}"/>`).join('')
+}
+
 // Shelf packing. items: [{ w, h, ... }]
 // Returns { sheets: [[{ item, x, y, rotated }]], oversize: [item] }
 export function packSheets(items, sheetW, sheetH, { allowRotate = true } = {}) {
@@ -65,7 +73,7 @@ export function buildSheetSvg(placements, sheetW, sheetH, { preview = false } = 
 
   const body = placements.map(p => {
     const label = preview && p.label
-      ? `<text x="${fmt(p.w / 2)}" y="${fmt(p.h / 2)}" font-family="sans-serif" font-size="${fmt(Math.min(9, p.w / 8))}" fill="#7a5a30" text-anchor="middle" dominant-baseline="middle">${escapeXml(p.label)}</text>`
+      ? `<text x="${fmt(p.w / 2)}" y="${fmt(p.h / 2)}" font-family="sans-serif" font-size="${fmt(Math.min(9, p.w / 8, p.h * 0.7))}" fill="#7a5a30" text-anchor="middle" dominant-baseline="middle">${escapeXml(p.label)}</text>`
       : ''
     return [
       `  <g transform="translate(${fmt(p.x)},${fmt(p.y)})">`,

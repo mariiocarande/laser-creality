@@ -14,7 +14,8 @@ La app se organiza en pestañas. El selector de **equipo láser** es global: al 
 ### 📦 Cajas
 - Caja rectangular con **finger joints** (dientes), medidas exteriores o interiores
 - Grosor de material, ancho de diente y **compensación de kerf** configurables
-- Tapa **abierta**, **encastrada** (caja cerrada) o **suelta** (tapa lisa con tope interior)
+- **Divisores internos**: columnas y filas (hasta 8 × 8) que se encastran en cruz y quedan sueltos dentro de la caja
+- Cinco tapas: **abierta**, **encastrada** (caja cerrada), **suelta** (tapa lisa con tope interior), **corrediza** (corre entre guías pegadas a los laterales) y **con bisagra** (orejas de la tapa que giran en agujeros de los laterales)
 - **Vista 3D interactiva** (three.js) de la caja armada: girar, zoom y mover; vistas de perspectiva, frente, planta y lateral; separar las piezas, abrir la tapa con animación, giro automático, cotas, grilla, ocultar piezas con un click y exportar la vista a PNG. El material elegido cambia el aspecto (veta de madera, acrílico translúcido)
 - Las piezas se acomodan solas en el área de la máquina; si no entran en una plancha se reparten en varias
 - Parámetros de corte según material y equipo, largo de corte y tiempo estimado
@@ -106,6 +107,8 @@ laser-prep-falcon5w/
 ## Cómo se arma una caja
 
 Cada panel es un rectángulo cuyos cuatro bordes llevan un perfil macho, hembra o liso. Los dientes se reparten en una cantidad impar sobre el largo del borde menos las dos esquinas; cada esquina (un cuadrado del grosor del material) pertenece a un solo panel (frente/atrás), así las piezas nunca se pisan. El **kerf** se compensa agrandando cada contorno medio kerf hacia afuera, de modo que el encastre quede firme.
+
+Las tapas corrediza y con bisagra llevan piezas que se pegan (guías o apoyos) y, en la de bisagra, la tapa se coloca mientras se arma la caja. Son diseños nuevos: conviene probarlos primero en chico.
 
 Para medir tu kerf: cortá un cuadrado de 100 mm, medilo con calibre y calculá `(100 − medida) ÷ 2`.
 
