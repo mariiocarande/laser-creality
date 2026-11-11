@@ -3,6 +3,7 @@ import { state, setMachine, onMachineChange } from './state.js'
 import { buildMachineSelector, updateMachineInfo } from './ui.js'
 import { initImagePrep } from './tools/imagePrep.js'
 import { initBoxTool } from './tools/boxTool.js'
+import { initVectorTool } from './tools/vectorTool.js'
 import { initCustomTool } from './tools/customTool.js'
 
 function setView(view) {
@@ -27,6 +28,7 @@ function init() {
 
   initImagePrep()
   initBoxTool()
+  initVectorTool()
   initCustomTool()
   setView(state.view)
 }

@@ -4,6 +4,7 @@ import bebasUrl from '@fontsource/bebas-neue/files/bebas-neue-latin-400-normal.w
 import dmSansUrl from '@fontsource/dm-sans/files/dm-sans-latin-700-normal.woff?url'
 import { state, onMachineChange } from '../state.js'
 import { MACHINES } from '../machines.js'
+import { layoutPiece } from '../pieceOutline.js'
 import { packSheets, buildSheetSvg, renderSheetPreviews, downloadSvgs } from '../sheets.js'
 
 const FONTS = {
@@ -13,7 +14,6 @@ const FONTS = {
 }
 
 const CONTENT_GAP = 3
-const HOLE_EDGE_GAP = 2.5
 const TEXT_OVERFLOW = 1.15   // text may be this much wider than the design before shrinking
 const MAX_FILE_BYTES = 20 * 1024 * 1024
 
@@ -228,32 +228,8 @@ function buildPieces() {
   const cw = Math.max(dw, tw)
   const ch = stacked ? dh + gap + th : Math.max(dh, th)
 
-  const hasOutline = custom.outline !== 'none'
-  const hasHole = hasOutline && custom.hole
-  const holeSpace = hasHole ? custom.holeDiameter + HOLE_EDGE_GAP : 0
-  const m = hasOutline ? custom.margin : 0
-
-  let pw, ph, ox, oy, outlineCut = ''
-  if (custom.outline === 'circle') {
-    const r = Math.max(Math.hypot(cw, ch) / 2 + m, ch / 2 + holeSpace + 1)
-    pw = ph = 2 * r
-    ox = r - cw / 2
-    oy = r - ch / 2
-    outlineCut = `<circle cx="${fmt(r)}" cy="${fmt(r)}" r="${fmt(r)}"/>`
-  } else {
-    pw = cw + 2 * m
-    ph = ch + 2 * m + holeSpace
-    ox = m
-    oy = m + holeSpace
-    if (hasOutline) {
-      const r = custom.outline === 'round' ? Math.min(custom.radius, pw / 2, ph / 2) : 0
-      outlineCut = `<rect x="0" y="0" width="${fmt(pw)}" height="${fmt(ph)}" rx="${fmt(r)}" ry="${fmt(r)}"/>`
-    }
-  }
-  if (hasHole) {
-    const hr = custom.holeDiameter / 2
-    outlineCut += `<circle cx="${fmt(pw / 2)}" cy="${fmt(HOLE_EDGE_GAP + hr)}" r="${fmt(hr)}"/>`
-  }
+  const piece = layoutPiece({ w: cw, h: ch }, custom)
+  const { w: pw, h: ph, x: ox, y: oy, cut: outlineCut } = piece
 
   const designY = stacked && custom.textPos === 'above' ? oy + th + gap : oy + (stacked ? 0 : (ch - dh) / 2)
   const textBlockY = stacked ? (custom.textPos === 'above' ? oy : oy + dh + gap) : oy + (ch - th) / 2

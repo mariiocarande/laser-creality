@@ -22,6 +22,13 @@ La app se organiza en pestañas. El selector de **equipo láser** es global: al 
 - Parámetros de corte según material y equipo, largo de corte y tiempo estimado
 - Exporta **SVG en milímetros reales** (trazo rojo = corte)
 
+### 〰 Vectorizar
+- Convierte un logo, silueta o dibujo (PNG, JPG, WEBP, SVG; también pegando con Ctrl+V) en **trazos cerrados reales**, con huecos incluidos
+- Umbral, invertir, suavizado de bordes, filtro de manchas, precisión del trazo, **curvas Bézier** y opción de solo silueta exterior
+- Salida como **corte** (contorno rojo), **grabado** (relleno negro) o ambas capas
+- **Contorno de corte alrededor** (recto, redondeado o círculo) con margen y agujero para colgar
+- Ancho final en mm y exportación SVG a tamaño real; todo se procesa en el navegador
+
 ### ✨ Personalizar
 - Cargá un diseño base (**SVG**, PNG o JPG) y definí su ancho final en mm — o trabajá solo con texto
 - Lista de **nombres, uno por línea**: se genera una pieza por nombre, todas en la misma plancha
@@ -95,6 +102,8 @@ laser-prep-falcon5w/
 │   ├── db.js               # Base de datos de materiales y parámetros base
 │   ├── ui.js               # Grillas y display de parámetros (Preparar imagen)
 │   ├── imageProcessing.js  # Floyd-Steinberg, Sobel, trazado de contornos, RDP
+│   ├── vectorize.js        # Imagen → contornos cerrados (trazado, simplificación, Bézier)
+│   ├── pieceOutline.js     # Contorno de corte y agujero, compartido por Vectorizar y Personalizar
 │   ├── boxGeometry.js      # Geometría de cajas: dientes, esquinas y kerf
 │   ├── boxPresets.js       # Presets de cajas y guardado en localStorage
 │   ├── box3d.js            # Vista 3D de la caja (three.js, se carga bajo demanda)
@@ -102,9 +111,18 @@ laser-prep-falcon5w/
 │   └── tools/
 │       ├── imagePrep.js    # Pestaña Preparar imagen
 │       ├── boxTool.js      # Pestaña Cajas
+│       ├── vectorTool.js   # Pestaña Vectorizar
 │       └── customTool.js   # Pestaña Personalizar
 └── README.md
 ```
+
+## Cómo funciona el vectorizador
+
+1. Escala de grises (lo transparente cuenta como blanco), suavizado opcional y **umbral** a una máscara blanco/negro
+2. **Trazado de bordes** siguiendo las aristas de los píxeles: cada frontera sale como un lazo cerrado, con sentido distinto para contornos y huecos
+3. Los vértices pasan al punto medio de cada arista, para que el escalonado de los píxeles no llegue al resultado
+4. **Simplificación Ramer-Douglas-Peucker** según la precisión elegida
+5. **Curvas Bézier** que pasan por los puntos, manteniendo las esquinas marcadas como esquinas
 
 ## Cómo se arma una caja
 

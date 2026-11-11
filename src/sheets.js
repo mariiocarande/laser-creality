@@ -68,8 +68,8 @@ const escapeXml = s => String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&
 // placements: [{ x, y, w, h, cut, engrave, label }]
 //   cut     → SVG markup drawn with the cut stroke (red hairline)
 //   engrave → SVG markup that carries its own fill
-export function buildSheetSvg(placements, sheetW, sheetH, { preview = false } = {}) {
-  const stroke = preview ? PREVIEW_STROKE : EXPORT_STROKE
+export function buildSheetSvg(placements, sheetW, sheetH, { preview = false, previewStroke = PREVIEW_STROKE } = {}) {
+  const stroke = preview ? previewStroke : EXPORT_STROKE
 
   const body = placements.map(p => {
     const label = preview && p.label

@@ -37,6 +37,7 @@
     <nav class="tool-tabs" role="tablist" aria-label="Herramientas">
       <button class="tool-tab on" role="tab" data-view="image">🖼 Preparar imagen</button>
       <button class="tool-tab" role="tab" data-view="box">📦 Cajas</button>
+      <button class="tool-tab" role="tab" data-view="vector">〰 Vectorizar</button>
       <button class="tool-tab" role="tab" data-view="custom">✨ Personalizar</button>
     </nav>
     <div class="machine-wrap">
@@ -398,6 +399,154 @@
               El SVG sale en milímetros reales, con las piezas acomodadas en el área de tu máquina. Las líneas rojas son corte. Probá primero el encastre con una caja chica.
             </div>
             <button class="dl-btn" id="box-dl-btn" disabled>⬇ Descargar SVG de la caja</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIEW: VECTORIZER -->
+  <section class="view" data-view="vector" hidden>
+    <div class="grid">
+      <div>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-hd">
+            <span class="panel-hd-ico">📁</span>
+            <span class="panel-hd-txt">Imagen a vectorizar</span>
+          </div>
+          <div class="panel-body">
+            <div class="drop-zone" id="vec-drop">
+              <input type="file" id="vec-file" accept="image/*">
+              <span class="up-ico">⬆</span>
+              <div class="up-title">Arrastrá, pegá (Ctrl+V) o hacé click</div>
+              <div class="up-sub">Logos, siluetas y dibujos de alto contraste</div>
+            </div>
+            <div class="file-row" id="vec-file-row" style="display:none">
+              <b id="vec-file-name"></b>
+              <button class="mini-btn danger" id="vec-remove">Quitar</button>
+            </div>
+            <div class="note-box warn-box" id="vec-file-error" style="display:none"></div>
+            <label class="field"><span class="field-lbl">Ancho final de la forma (mm)</span>
+              <input class="num-input" id="vec-width" type="number" inputmode="decimal" min="1" step="1" value="80"></label>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-hd">
+            <span class="panel-hd-ico">〰</span>
+            <span class="panel-hd-txt">Trazado</span>
+          </div>
+          <div class="panel-body">
+
+            <div class="sec-lbl">Blanco y negro</div>
+            <div class="sl-group">
+              <div class="sl-top">
+                <span class="sl-nm">Umbral (negro / blanco)</span>
+                <span class="sl-val" id="lbl-vec-threshold"></span>
+              </div>
+              <input type="range" id="vec-threshold" min="30" max="225" step="1" value="128" aria-label="Umbral (negro / blanco)">
+            </div>
+            <div class="tog-row">
+              <span class="tog-lbl">Invertir (trazar lo claro)</span>
+              <button class="tog" id="vec-invert" aria-label="Invertir (trazar lo claro)"></button>
+            </div>
+
+            <div class="sec-lbl">Limpieza</div>
+            <div class="sl-group">
+              <div class="sl-top">
+                <span class="sl-nm">Suavizado de bordes</span>
+                <span class="sl-val" id="lbl-vec-blur"></span>
+              </div>
+              <input type="range" id="vec-blur" min="0" max="3" step="1" value="1" aria-label="Suavizado de bordes">
+            </div>
+            <div class="sl-group">
+              <div class="sl-top">
+                <span class="sl-nm">Quitar manchas menores a</span>
+                <span class="sl-val" id="lbl-vec-min-area"></span>
+              </div>
+              <input type="range" id="vec-min-area" min="0" max="300" step="2" value="30" aria-label="Quitar manchas menores a">
+            </div>
+            <div class="sl-group">
+              <div class="sl-top">
+                <span class="sl-nm">Precisión del trazo (menor = más fiel)</span>
+                <span class="sl-val" id="lbl-vec-precision"></span>
+              </div>
+              <input type="range" id="vec-precision" min="0.3" max="3" step="0.1" value="0.8" aria-label="Precisión del trazo (menor = más fiel)">
+            </div>
+            <div class="tog-row">
+              <span class="tog-lbl">Curvas suaves (Bézier)</span>
+              <button class="tog" id="vec-curves" aria-label="Curvas suaves (Bézier)"></button>
+            </div>
+            <div class="tog-row">
+              <span class="tog-lbl">Solo silueta exterior (sin huecos)</span>
+              <button class="tog" id="vec-outer-only" aria-label="Solo silueta exterior (sin huecos)"></button>
+            </div>
+
+            <div class="sec-lbl">Qué generar</div>
+            <div class="choice-row three">
+              <button class="choice-btn vec-output-btn" data-value="cut">Corte</button>
+              <button class="choice-btn vec-output-btn on" data-value="engrave">Grabado</button>
+              <button class="choice-btn vec-output-btn" data-value="both">Ambos</button>
+            </div>
+            <p class="hint">Corte = contorno en rojo. Grabado = relleno negro. Ambos = las dos capas, para darles potencias distintas.</p>
+
+            <div class="sec-lbl">Contorno de corte alrededor</div>
+            <div class="choice-row four">
+              <button class="choice-btn vec-outline-btn on" data-value="none">Sin</button>
+              <button class="choice-btn vec-outline-btn" data-value="rect">Recto</button>
+              <button class="choice-btn vec-outline-btn" data-value="round">Redondo</button>
+              <button class="choice-btn vec-outline-btn" data-value="circle">Círculo</button>
+            </div>
+            <div class="field-grid two">
+              <label class="field" id="vec-margin-field"><span class="field-lbl">Margen (mm)</span>
+                <input class="num-input" id="vec-margin" type="number" inputmode="decimal" min="0" step="0.5" value="4"></label>
+              <label class="field" id="vec-radius-field"><span class="field-lbl">Radio esquinas (mm)</span>
+                <input class="num-input" id="vec-radius" type="number" inputmode="decimal" min="0" step="0.5" value="6"></label>
+            </div>
+            <div class="tog-row" id="vec-hole-row">
+              <span class="tog-lbl">Agujero para colgar</span>
+              <button class="tog" id="vec-hole" aria-label="Agujero para colgar"></button>
+            </div>
+            <label class="field" id="vec-hole-field"><span class="field-lbl">Diámetro del agujero (mm)</span>
+              <input class="num-input" id="vec-hole-d" type="number" inputmode="decimal" min="0.5" step="0.5" value="4"></label>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="right-col">
+        <div class="panel">
+          <div class="panel-hd">
+            <span class="panel-hd-ico">👁</span>
+            <span class="panel-hd-txt">Vista previa</span>
+          </div>
+          <div class="prev-tabs">
+            <button class="prev-tab vec-view-tab" data-vecview="original">Original</button>
+            <button class="prev-tab vec-view-tab on" data-vecview="vector">Vectorial</button>
+          </div>
+          <div class="sheet-area">
+            <div class="prev-empty" id="vec-empty">
+              <span class="prev-empty-ico">〰</span>
+              <div class="prev-empty-txt" id="vec-empty-txt">Subí una imagen para empezar</div>
+            </div>
+            <img id="vec-original" class="vec-original" alt="Imagen original" hidden>
+            <div id="vec-preview" class="sheet-list"></div>
+          </div>
+          <div id="vec-info" class="output-info" style="display:none"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-hd">
+            <span class="panel-hd-ico">⬇</span>
+            <span class="panel-hd-txt">Exportar</span>
+          </div>
+          <div class="panel-body">
+            <div class="note-box warn-box" id="vec-warn" style="display:none"></div>
+            <div class="note-box">
+              <strong>📝 Nota: </strong>
+              Todo se procesa en tu navegador: la imagen no se sube a ningún lado. El SVG sale en milímetros reales con trazos cerrados. Funciona mejor con logos y dibujos; para fotos usá "Preparar imagen".
+            </div>
+            <button class="dl-btn" id="vec-dl-btn" disabled>⬇ Descargar SVG vectorizado</button>
           </div>
         </div>
       </div>
