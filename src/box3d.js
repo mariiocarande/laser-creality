@@ -396,6 +396,8 @@ export function createBoxViewer(container) {
     setMaterial,
     clear() { clear(); dims = null; render() },
     setExplode(value) { anim.explode.target = anim.explode.current = value; applyPose(); render() },
+    // Starts fully separated and eases back to the current explode value.
+    playAssembly() { anim.explode.current = 1; applyPose(); startLoop() },
     setLidOpen(open) { anim.lid.target = open ? 1 : 0; startLoop() },
     hasLid: () => parts.some(p => p.motion),
     setAutoRotate(on) { controls.autoRotate = on; if (on) startLoop() },

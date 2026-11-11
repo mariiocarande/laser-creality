@@ -14,6 +14,7 @@ La app se organiza en pestañas. El selector de **equipo láser** es global: al 
 ### 📦 Cajas
 - Caja rectangular con **finger joints** (dientes), medidas exteriores o interiores
 - Grosor de material, ancho de diente y **compensación de kerf** configurables
+- **Presets**: 12 cajas listas (mazo de cartas, joyero, caja de té, organizador, regalo, etc.) que cargan medidas, tapa y divisores de una; además podés **guardar tus propias configuraciones** en el navegador
 - **Divisores internos**: columnas y filas (hasta 8 × 8) que se encastran en cruz y quedan sueltos dentro de la caja
 - Cinco tapas: **abierta**, **encastrada** (caja cerrada), **suelta** (tapa lisa con tope interior), **corrediza** (corre entre guías pegadas a los laterales) y **con bisagra** (orejas de la tapa que giran en agujeros de los laterales)
 - **Vista 3D interactiva** (three.js) de la caja armada: girar, zoom y mover; vistas de perspectiva, frente, planta y lateral; separar las piezas, abrir la tapa con animación, giro automático, cotas, grilla, ocultar piezas con un click y exportar la vista a PNG. El material elegido cambia el aspecto (veta de madera, acrílico translúcido)
@@ -95,6 +96,7 @@ laser-prep-falcon5w/
 │   ├── ui.js               # Grillas y display de parámetros (Preparar imagen)
 │   ├── imageProcessing.js  # Floyd-Steinberg, Sobel, trazado de contornos, RDP
 │   ├── boxGeometry.js      # Geometría de cajas: dientes, esquinas y kerf
+│   ├── boxPresets.js       # Presets de cajas y guardado en localStorage
 │   ├── box3d.js            # Vista 3D de la caja (three.js, se carga bajo demanda)
 │   ├── sheets.js           # Acomodo en planchas, armado y descarga de SVG
 │   └── tools/

@@ -3,6 +3,9 @@ import { state, onMachineChange } from '../state.js'
 import { MACHINES, applyMachine } from '../machines.js'
 import { buildBox } from '../boxGeometry.js'
 import {
+  BOX_PRESETS, PRESET_FIELDS, describePreset, loadSavedPresets, storeSavedPresets,
+} from '../boxPresets.js'
+import {
   packSheets, pointsToPath, rotatePoints, rotateHoles, holesToMarkup,
   buildSheetSvg, renderSheetPreviews, downloadSvgs,
 } from '../sheets.js'
@@ -28,6 +31,8 @@ let exportSvgs = []
 let viewer = null       // 3D viewer, loaded lazily so three.js stays out of the main bundle
 let lastResult = null
 let lidOpen = false
+let savedPresets = []
+let activePreset = null   // id of the preset the current box still matches
 
 const LID_HINTS = {
   open:   'Sin tapa.',
@@ -246,7 +251,110 @@ function setBoxView(view) {
   el('box-preview').hidden = view !== 'sheet'
 }
 
+// ── PRESETS ────────────────────────────────────────────────────
+
+function syncControls() {
+  el('box-width').value     = box.width
+  el('box-depth').value     = box.depth
+  el('box-height').value    = box.height
+  el('box-thickness').value = box.thickness
+  el('box-finger').value    = box.fingerWidth
+  el('box-cols').value      = box.cols
+  el('box-rows').value      = box.rows
+  el('box-inner').classList.toggle('on', box.innerDims)
+  document.querySelectorAll('.lid-btn').forEach(b => b.classList.toggle('on', b.dataset.lid === box.lid))
+  el('box-lid-hint').textContent = LID_HINTS[box.lid]
+}
+
+function applyPreset(preset) {
+  PRESET_FIELDS.forEach(field => { if (preset[field] !== undefined) box[field] = preset[field] })
+  activePreset = preset.id
+  lidOpen = false
+  syncControls()
+  renderPresets()
+  update()
+  if (viewer) {
+    viewer.setLidOpen(false)
+    viewer.playAssembly()
+  }
+}
+
+function clearActivePreset() {
+  if (!activePreset) return
+  activePreset = null
+  renderPresets()
+}
+
+function presetButton(preset, isSaved) {
+  const btn = document.createElement('button')
+  btn.type = 'button'
+  btn.className = 'preset-btn' + (isSaved ? ' saved' : '') + (preset.id === activePreset ? ' on' : '')
+  btn.title = `${preset.name} — ${describePreset(preset)}`
+
+  const icon = document.createElement('span')
+  icon.className = 'preset-ico'
+  icon.textContent = preset.icon || '⭐'
+  const name = document.createElement('span')
+  name.className = 'preset-nm'
+  name.textContent = preset.name
+  const desc = document.createElement('span')
+  desc.className = 'preset-desc'
+  desc.textContent = describePreset(preset)
+  btn.append(icon, name, desc)
+  btn.addEventListener('click', () => applyPreset(preset))
+
+  if (!isSaved) return btn
+
+  // A delete control cannot live inside the button, so wrap both.
+  const wrap = document.createElement('div')
+  wrap.style.position = 'relative'
+  const del = document.createElement('button')
+  del.type = 'button'
+  del.className = 'preset-del'
+  del.textContent = '✕'
+  del.setAttribute('aria-label', `Borrar ${preset.name}`)
+  del.addEventListener('click', () => {
+    savedPresets = savedPresets.filter(p => p.id !== preset.id)
+    storeSavedPresets(savedPresets)
+    if (activePreset === preset.id) activePreset = null
+    renderPresets()
+  })
+  wrap.append(btn, del)
+  return wrap
+}
+
+function renderPresets() {
+  const grid = el('box-presets')
+  grid.innerHTML = ''
+  savedPresets.forEach(p => grid.appendChild(presetButton(p, true)))
+  BOX_PRESETS.forEach(p => grid.appendChild(presetButton(p, false)))
+}
+
+function saveCurrentPreset() {
+  const input = el('box-preset-name')
+  const hint = el('box-preset-hint')
+  const name = input.value.trim()
+  if (!name) {
+    hint.textContent = 'Escribí un nombre para guardar esta caja.'
+    input.focus()
+    return
+  }
+
+  const preset = { id: `saved-${Date.now()}`, name, icon: '⭐' }
+  PRESET_FIELDS.forEach(field => { preset[field] = box[field] })
+  savedPresets = [preset, ...savedPresets.filter(p => p.name !== name)]
+
+  const stored = storeSavedPresets(savedPresets)
+  hint.textContent = stored
+    ? `"${name}" guardado en este navegador.`
+    : 'Este navegador no permite guardar; el preset dura hasta que cierres la página.'
+  input.value = ''
+  activePreset = preset.id
+  renderPresets()
+}
+
 function onInput() {
+  clearActivePreset()
   box.width       = readNumber('box-width', box.width)
   box.depth       = readNumber('box-depth', box.depth)
   box.height      = readNumber('box-height', box.height)
@@ -259,6 +367,11 @@ function onInput() {
 }
 
 export function initBoxTool() {
+  savedPresets = loadSavedPresets()
+  renderPresets()
+  el('box-preset-save').addEventListener('click', saveCurrentPreset)
+  el('box-preset-name').addEventListener('keydown', e => { if (e.key === 'Enter') saveCurrentPreset() })
+
   buildMaterialOptions()
   buildToneOptions()
 
@@ -267,6 +380,7 @@ export function initBoxTool() {
 
   el('box-inner').addEventListener('click', () => {
     box.innerDims = !box.innerDims
+    clearActivePreset()
     el('box-inner').classList.toggle('on', box.innerDims)
     update()
   })
@@ -274,6 +388,7 @@ export function initBoxTool() {
   document.querySelectorAll('.lid-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       box.lid = btn.dataset.lid
+      clearActivePreset()
       document.querySelectorAll('.lid-btn').forEach(b => b.classList.toggle('on', b === btn))
       el('box-lid-hint').textContent = LID_HINTS[box.lid]
       update()
