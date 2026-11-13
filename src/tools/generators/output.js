@@ -7,8 +7,10 @@ import { state } from '../../state.js'
 export function showPieces(refs, pieces, { allowRotate = false } = {}) {
   const machine = MACHINES[state.machine]
   const { sheets, oversize } = packSheets(pieces, machine.area.w, machine.area.h, { allowRotate })
+  // A rotated piece turns 90° clockwise: (x, y) → (h − y, x), same as rotatePoints().
+  const turn = (markup, p) => (p.rotated && markup ? `<g transform="matrix(0 1 -1 0 ${p.item.h} 0)">${markup}</g>` : markup)
   const placements = sheets.map(sheet => sheet.map(p => ({
-    x: p.x, y: p.y, w: p.w, h: p.h, cut: p.item.cut, engrave: p.item.engrave,
+    x: p.x, y: p.y, w: p.w, h: p.h, cut: turn(p.item.cut, p), engrave: turn(p.item.engrave, p),
   })))
   const svgs = placements.map(pl => buildSheetSvg(pl, machine.area.w, machine.area.h))
   renderSheetPreviews(refs.preview, placements.map(pl =>
