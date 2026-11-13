@@ -1,4 +1,5 @@
 export const state = {
+  view:          'image',     // 'image' | 'box' | 'vector' | 'custom' | 'generators'
   machine:       'creality-falcon5w',
   material:      'wood',
   color:         'medium',
@@ -17,4 +18,15 @@ export const state = {
   outputWidth:   0,
   outputHeight:  0,
   pathCount:     0,
+}
+
+const machineListeners = []
+
+export function onMachineChange(listener) {
+  machineListeners.push(listener)
+}
+
+export function setMachine(key) {
+  state.machine = key
+  machineListeners.forEach(listener => listener(key))
 }
