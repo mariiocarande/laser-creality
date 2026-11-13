@@ -25,6 +25,20 @@ function fieldHtml(f) {
           ${f.options.map(([value, label]) =>
             `<button class="choice-btn" data-key="${f.key}" data-value="${value}">${esc(label)}</button>`).join('')}
         </div>`
+    case 'select':
+      return `
+        <label class="field" data-field="${f.key}"><span class="field-lbl">${esc(f.label)}</span>
+          <select class="machine-select" data-key="${f.key}">
+            ${f.options.map(([value, label]) => `<option value="${value}">${esc(label)}</option>`).join('')}
+          </select></label>`
+    case 'textarea':
+      return `
+        <label class="field" data-field="${f.key}"><span class="field-lbl">${esc(f.label)}</span>
+          <textarea class="text-input" data-key="${f.key}" rows="${f.rows || 4}" placeholder="${esc(f.placeholder || '')}"></textarea></label>`
+    case 'text':
+      return `
+        <label class="field" data-field="${f.key}"><span class="field-lbl">${esc(f.label)}</span>
+          <input class="text-input" type="text" data-key="${f.key}" maxlength="${f.maxLength || 40}" placeholder="${esc(f.placeholder || '')}"></label>`
     case 'toggle':
       return `
         <div class="tog-row" data-field="${f.key}">
@@ -72,7 +86,10 @@ export function bindControls(root, sections, model, onChange) {
   const sync = () => {
     fields.forEach(f => {
       const value = model[f.key]
-      if (f.type === 'range' || f.type === 'number') {
+      if (f.type === 'select' || f.type === 'textarea' || f.type === 'text') {
+        const input = root.querySelector(`[data-key="${f.key}"]`)
+        if (input && document.activeElement !== input) input.value = value
+      } else if (f.type === 'range' || f.type === 'number') {
         const input = root.querySelector(`input[data-key="${f.key}"]`)
         if (input && document.activeElement !== input) input.value = value
         const label = root.querySelector(`[data-label-for="${f.key}"]`)
@@ -88,7 +105,20 @@ export function bindControls(root, sections, model, onChange) {
     refreshVisibility()
   }
 
+  const onTextInput = e => {
+    const f = byKey[e.target.dataset.key]
+    if (!f || !['select', 'textarea', 'text'].includes(f.type)) return
+    model[f.key] = e.target.value
+    refreshVisibility()
+    onChange(f.key)
+  }
+  root.addEventListener('change', e => { if (e.target.tagName === 'SELECT') onTextInput(e) })
+
   root.addEventListener('input', e => {
+    if (e.target.tagName === 'TEXTAREA' || (e.target.tagName === 'INPUT' && e.target.type === 'text')) {
+      onTextInput(e)
+      return
+    }
     const f = byKey[e.target.dataset.key]
     if (!f || (f.type !== 'range' && f.type !== 'number')) return
     const value = parseFloat(String(e.target.value).replace(',', '.'))

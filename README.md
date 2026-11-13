@@ -31,6 +31,9 @@ La app se organiza en pestañas. El selector de **equipo láser** es global: al 
 
 ### 🧰 Generadores
 Galería de herramientas extra, cada una en su propia ficha:
+- **Esferas con nombre**: esfera, disco o estrella con el nombre **grabado** o **calado** (con puentes automáticos en la O, A, B…), segunda línea opcional, decoración grabada (aro o copos) y una pieza por cada nombre de la lista
+- **Árbol familiar**: los nombres arman los pisos de un arbolito (el más corto arriba), con estrella para colgar y el año en el tronco; nombres grabados o calados, todo en una sola pieza
+- **Crucigrama familiar**: acomoda solos los nombres cruzándolos en letras compartidas, fichas con puntaje, en una sola pieza o en fichas sueltas con base marcada para pegar
 - **Halftone**: foto → puntos, cuadrados o líneas como formas vectoriales reales (trama, ángulo, tamaño de punto, brillo, contraste, gamma, invertir)
 - **Mapa de profundidad**: foto → escala de grises para grabado 3D por potencia (suavizado, realce de detalle, niveles); el PNG sale con su DPI guardado para que LightBurn lo importe al tamaño correcto. Se basa en el brillo, no en IA
 - **Rompecabezas**: piezas con encastre clásico y variación aleatoria reproducible, cantidad de piezas por preset o filas × columnas, foto opcional como capa de grabado y tiempo de corte estimado
@@ -110,6 +113,9 @@ laser-prep-falcon5w/
 │   ├── imageProcessing.js  # Floyd-Steinberg, Sobel, trazado de contornos, RDP
 │   ├── vectorize.js        # Imagen → contornos cerrados (trazado, simplificación, Bézier)
 │   ├── pieceOutline.js     # Contorno de corte y agujero, compartido por Vectorizar y Personalizar
+│   ├── textPaths.js        # Tipografías y texto → trazos (compartido)
+│   ├── weld.js             # Une formas dibujadas y calcula calados con puentes
+│   ├── crossword.js        # Acomodo de palabras cruzadas
 │   ├── halftone.js         # Trama halftone como formas vectoriales
 │   ├── puzzle.js           # Líneas de corte del rompecabezas
 │   ├── imageInput.js       # Carga de imágenes compartida (arrastrar, pegar, decodificar)
