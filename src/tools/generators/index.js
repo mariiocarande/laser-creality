@@ -1,9 +1,20 @@
 import { halftoneTool } from './halftoneTool.js'
 import { depthMapTool } from './depthMapTool.js'
 import { puzzleTool } from './puzzleTool.js'
+import { ornamentTool } from './ornamentTool.js'
+import { treeTool } from './treeTool.js'
+import { crosswordTool } from './crosswordTool.js'
+import { qrTagTool } from './qrTagTool.js'
+import { keychainTool } from './keychainTool.js'
+import { drinkMarkerTool } from './drinkMarkerTool.js'
+import { frameTool } from './frameTool.js'
 
 // Add new generators here: each one needs { id, icon, title, description, mount(root, { onBack }) }.
-const GENERATORS = [halftoneTool, depthMapTool, puzzleTool]
+const GENERATORS = [
+  ornamentTool, treeTool, crosswordTool,
+  qrTagTool, keychainTool, drinkMarkerTool, frameTool,
+  halftoneTool, depthMapTool, puzzleTool,
+]
 
 export function initGenerators() {
   const gallery = document.getElementById('gen-gallery')

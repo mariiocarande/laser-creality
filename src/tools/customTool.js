@@ -1,17 +1,8 @@
-import { parse as parseFont } from 'opentype.js'
-import pacificoUrl from '@fontsource/pacifico/files/pacifico-latin-400-normal.woff?url'
-import bebasUrl from '@fontsource/bebas-neue/files/bebas-neue-latin-400-normal.woff?url'
-import dmSansUrl from '@fontsource/dm-sans/files/dm-sans-latin-700-normal.woff?url'
+import { FONTS, loadAllFonts, textBlock, textMarkup } from '../textPaths.js'
 import { state, onMachineChange } from '../state.js'
 import { MACHINES } from '../machines.js'
 import { layoutPiece } from '../pieceOutline.js'
 import { packSheets, buildSheetSvg, renderSheetPreviews, downloadSvgs } from '../sheets.js'
-
-const FONTS = {
-  pacifico: { label: 'Pacifico (cursiva)', url: pacificoUrl },
-  bebas:    { label: 'Bebas Neue (mayúsculas)', url: bebasUrl },
-  dmsans:   { label: 'DM Sans Bold (recta)', url: dmSansUrl },
-}
 
 const CONTENT_GAP = 3
 const TEXT_OVERFLOW = 1.15   // text may be this much wider than the design before shrinking
@@ -31,7 +22,7 @@ const custom = {
   holeDiameter: 4,
 }
 
-const loadedFonts = {}
+let loadedFonts = {}
 let exportSvgs = []
 
 const el = id => document.getElementById(id)
@@ -157,55 +148,8 @@ function designMarkup(x, y, w, h) {
   return `<g transform="translate(${fmt(x - d.minX * s)},${fmt(y - d.minY * s)}) scale(${s.toFixed(6)})" ${d.attrs}>${d.markup}</g>`
 }
 
-// Text is laid out glyph by glyph and serialized here on purpose: opentype.js'
-// own getPath()/toPathData() throw on some GSUB tables and can emit NaN.
-function layoutText(font, text, size) {
-  const scale = size / font.unitsPerEm
-  const commands = []
-  const b = { x1: Infinity, y1: Infinity, x2: -Infinity, y2: -Infinity }
-  let x = 0
-  let previous = null
-
-  for (const char of text) {
-    const glyph = font.charToGlyph(char)
-    if (previous) x += font.getKerningValue(previous, glyph) * scale
-    const glyphPath = glyph.getPath(x, 0, size)
-    if (glyphPath.commands.length) {
-      const g = glyphPath.getBoundingBox()
-      b.x1 = Math.min(b.x1, g.x1); b.y1 = Math.min(b.y1, g.y1)
-      b.x2 = Math.max(b.x2, g.x2); b.y2 = Math.max(b.y2, g.y2)
-      commands.push(...glyphPath.commands)
-    }
-    x += (glyph.advanceWidth || 0) * scale
-    previous = glyph
-  }
-  return { commands, b }
-}
-
-function commandsToPathData(commands) {
-  return commands.map(c => {
-    switch (c.type) {
-      case 'M': return `M${fmt(c.x)} ${fmt(c.y)}`
-      case 'L': return `L${fmt(c.x)} ${fmt(c.y)}`
-      case 'Q': return `Q${fmt(c.x1)} ${fmt(c.y1)} ${fmt(c.x)} ${fmt(c.y)}`
-      case 'C': return `C${fmt(c.x1)} ${fmt(c.y1)} ${fmt(c.x2)} ${fmt(c.y2)} ${fmt(c.x)} ${fmt(c.y)}`
-      default:  return 'Z'
-    }
-  }).join('')
-}
-
 function measureText(font, text, maxWidth) {
-  const { commands, b } = layoutText(font, text, custom.fontSize)
-  if (!commands.length) return { w: 0, h: 0 }
-  const width = b.x2 - b.x1
-  const scale = maxWidth && width > maxWidth ? maxWidth / width : 1
-  return { commands, b, scale, w: width * scale, h: (b.y2 - b.y1) * scale }
-}
-
-function textMarkup(t, x, y) {
-  const tx = x - t.b.x1 * t.scale
-  const ty = y - t.b.y1 * t.scale
-  return `<path fill="#000000" transform="translate(${fmt(tx)},${fmt(ty)}) scale(${t.scale.toFixed(6)})" d="${commandsToPathData(t.commands)}"/>`
+  return textBlock(font, text, custom.fontSize, maxWidth) || { w: 0, h: 0 }
 }
 
 function buildPieces() {
@@ -327,14 +271,7 @@ function bindChoice(selector, key, after) {
 }
 
 async function loadFonts() {
-  await Promise.all(Object.entries(FONTS).map(async ([key, font]) => {
-    try {
-      const res = await fetch(font.url)
-      loadedFonts[key] = parseFont(await res.arrayBuffer())
-    } catch (err) {
-      console.error(`Font "${key}" failed to load`, err)
-    }
-  }))
+  loadedFonts = await loadAllFonts()
   update()
 }
 

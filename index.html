@@ -283,6 +283,14 @@
             </div>
             <p class="hint" id="box-preset-hint">Elegí uno para arrancar y después ajustá lo que quieras. Los que guardes quedan en este navegador.</p>
 
+            <div class="sec-lbl">Tipo</div>
+            <div class="choice-row three">
+              <button class="choice-btn kind-btn on" data-kind="box">📦 Caja</button>
+              <button class="choice-btn kind-btn" data-kind="drawer">🗄 Cajón</button>
+              <button class="choice-btn kind-btn" data-kind="planter">🪴 Maceta</button>
+            </div>
+            <p class="hint" id="box-kind-hint"></p>
+
             <div class="sec-lbl">Medidas (mm)</div>
             <div class="field-grid three">
               <label class="field"><span class="field-lbl">Ancho</span>
@@ -314,6 +322,25 @@
             </div>
             <p class="hint">Kerf = lo que el láser se come al cortar. Cortá un cuadrado de 100 mm, medilo y hacé (100 − medida) ÷ 2. Si la caja queda floja, subilo; si no encastra, bajalo.</p>
 
+            <div data-kinds="drawer">
+              <div class="sec-lbl">Cajón</div>
+              <label class="field"><span class="field-lbl">Holgura total del cajón (mm)</span>
+                <input class="num-input" id="box-clearance" type="number" inputmode="decimal" min="0.2" max="4" step="0.1" value="1"></label>
+              <p class="hint">Espacio entre el cajón y el mueble para que corra. Si queda duro, subilo; si baila, bajalo.</p>
+            </div>
+
+            <div data-kinds="planter">
+              <div class="sec-lbl">Maceta</div>
+              <label class="field"><span class="field-lbl">Alto de las patas (mm)</span>
+                <input class="num-input" id="box-foot" type="number" inputmode="decimal" min="0" step="1" value="15"></label>
+              <div class="tog-row">
+                <span class="tog-lbl">Agujeros de drenaje en el piso</span>
+                <button class="tog on" id="box-drainage" aria-label="Agujeros de drenaje en el piso"></button>
+              </div>
+              <p class="hint">El piso entra con pestañas en ranuras de las paredes, así queda firme sin depender de la cola. La madera no aguanta agua: poné la planta en una maceta plástica adentro o usá un forro.</p>
+            </div>
+
+            <div data-kinds="box drawer">
             <div class="sec-lbl">Divisores</div>
             <div class="field-grid two">
               <label class="field"><span class="field-lbl">Columnas (a lo ancho)</span>
@@ -322,7 +349,9 @@
                 <input class="num-input" id="box-rows" type="number" inputmode="numeric" min="1" max="8" step="1" value="1"></label>
             </div>
             <p class="hint">Los divisores se encastran entre sí en cruz y van sueltos dentro de la caja, así los podés sacar.</p>
+            </div>
 
+            <div data-kinds="box">
             <div class="sec-lbl">Tapa</div>
             <div class="choice-row three">
               <button class="choice-btn lid-btn on" data-lid="open">Abierta</button>
@@ -332,6 +361,7 @@
               <button class="choice-btn lid-btn" data-lid="hinge">Bisagra</button>
             </div>
             <p class="hint" id="box-lid-hint">Sin tapa.</p>
+            </div>
 
           </div>
         </div>

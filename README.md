@@ -12,9 +12,10 @@ La app se organiza en pestañas. El selector de **equipo láser** es global: al 
 - Vista previa original vs. procesada y descarga en PNG o SVG
 
 ### 📦 Cajas
+- Tres tipos: **caja**, **cajón deslizante** (mueble abierto adelante + cajón con agujero para tirar y holgura ajustable) y **maceta** (caja abierta con patas, piso con pestañas que entran en ranuras de las paredes y agujeros de drenaje opcionales)
 - Caja rectangular con **finger joints** (dientes), medidas exteriores o interiores
 - Grosor de material, ancho de diente y **compensación de kerf** configurables
-- **Presets**: 12 cajas listas (mazo de cartas, joyero, caja de té, organizador, regalo, etc.) que cargan medidas, tapa y divisores de una; además podés **guardar tus propias configuraciones** en el navegador
+- **Presets**: 16 configuraciones listas (mazo de cartas, joyero, caja de té, organizador, regalo, cajonera, maceta de suculentas, jardinera, etc.) que cargan medidas, tapa y divisores de una; además podés **guardar tus propias configuraciones** en el navegador
 - **Divisores internos**: columnas y filas (hasta 8 × 8) que se encastran en cruz y quedan sueltos dentro de la caja
 - Cinco tapas: **abierta**, **encastrada** (caja cerrada), **suelta** (tapa lisa con tope interior), **corrediza** (corre entre guías pegadas a los laterales) y **con bisagra** (orejas de la tapa que giran en agujeros de los laterales)
 - **Vista 3D interactiva** (three.js) de la caja armada: girar, zoom y mover; vistas de perspectiva, frente, planta y lateral; separar las piezas, abrir la tapa con animación, giro automático, cotas, grilla, ocultar piezas con un click y exportar la vista a PNG. El material elegido cambia el aspecto (veta de madera, acrílico translúcido)
@@ -31,6 +32,13 @@ La app se organiza en pestañas. El selector de **equipo láser** es global: al 
 
 ### 🧰 Generadores
 Galería de herramientas extra, cada una en su propia ficha:
+- **Esferas con nombre**: esfera, disco o estrella con el nombre **grabado** o **calado** (con puentes automáticos en la O, A, B…), segunda línea opcional, decoración grabada (aro o copos) y una pieza por cada nombre de la lista
+- **Árbol familiar**: los nombres arman los pisos de un arbolito (el más corto arriba), con estrella para colgar y el año en el tronco; nombres grabados o calados, todo en una sola pieza
+- **Crucigrama familiar**: acomoda solos los nombres cruzándolos en letras compartidas, fichas con puntaje, en una sola pieza o en fichas sueltas con base marcada para pegar
+- **Etiqueta con QR**: link, wifi, redes o menú como QR vectorial (con margen de lectura), texto debajo, forma rectangular o redonda, agujero y copias; avisa si los puntos quedan muy chicos para un diodo
+- **Llavero de fichas**: el nombre en fichas tipo juego de palabras con puntaje, líneas grabadas entre fichas y oreja con agujero, horizontal o vertical; uno por nombre
+- **Marcadores de copa**: un marcador por invitado (etiqueta, redondo o corazón) con ranura para calzar en el borde del vidrio, ancho y profundidad ajustables
+- **Portarretratos**: para 10×15, 13×18, 9×13 o medida libre, clásico o tipo Polaroid, texto grabado en el borde, espaciador para deslizar la foto, tapa trasera con agujero para colgar y pie tipo escuadra para pegar
 - **Halftone**: foto → puntos, cuadrados o líneas como formas vectoriales reales (trama, ángulo, tamaño de punto, brillo, contraste, gamma, invertir)
 - **Mapa de profundidad**: foto → escala de grises para grabado 3D por potencia (suavizado, realce de detalle, niveles); el PNG sale con su DPI guardado para que LightBurn lo importe al tamaño correcto. Se basa en el brillo, no en IA
 - **Rompecabezas**: piezas con encastre clásico y variación aleatoria reproducible, cantidad de piezas por preset o filas × columnas, foto opcional como capa de grabado y tiempo de corte estimado
@@ -110,6 +118,10 @@ laser-prep-falcon5w/
 │   ├── imageProcessing.js  # Floyd-Steinberg, Sobel, trazado de contornos, RDP
 │   ├── vectorize.js        # Imagen → contornos cerrados (trazado, simplificación, Bézier)
 │   ├── pieceOutline.js     # Contorno de corte y agujero, compartido por Vectorizar y Personalizar
+│   ├── textPaths.js        # Tipografías y texto → trazos (compartido)
+│   ├── weld.js             # Une formas dibujadas y calcula calados con puentes
+│   ├── qr.js               # Código QR → trazado vectorial
+│   ├── crossword.js        # Acomodo de palabras cruzadas
 │   ├── halftone.js         # Trama halftone como formas vectoriales
 │   ├── puzzle.js           # Líneas de corte del rompecabezas
 │   ├── imageInput.js       # Carga de imágenes compartida (arrastrar, pegar, decodificar)
@@ -194,6 +206,7 @@ Para medir tu kerf: cortá un cuadrado de 100 mm, medilo con calibre y calculá 
 - Canvas API para procesamiento de imagen
 - [three.js](https://threejs.org/) para la vista 3D de las cajas
 - [opentype.js](https://opentype.js.org/) para convertir texto a trazos
+- [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) para los códigos QR
 - Tipografías vía [Fontsource](https://fontsource.org/): Pacifico, Bebas Neue, DM Sans
 - Google Fonts: [Orbitron](https://fonts.google.com/specimen/Orbitron), [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono), [DM Sans](https://fonts.google.com/specimen/DM+Sans)
 
