@@ -19,11 +19,15 @@ export function rotatePoints(points, h) {
 }
 
 export function rotateHoles(holes, h) {
-  return holes.map(({ cx, cy, r }) => ({ cx: h - cy, cy: cx, r }))
+  return holes.map(hole => (hole.rect
+    ? { rect: true, x: h - hole.y - hole.h, y: hole.x, w: hole.h, h: hole.w }
+    : { cx: h - hole.cy, cy: hole.cx, r: hole.r }))
 }
 
 export function holesToMarkup(holes) {
-  return holes.map(h => `<circle cx="${fmt(h.cx)}" cy="${fmt(h.cy)}" r="${fmt(h.r)}"/>`).join('')
+  return holes.map(h => (h.rect
+    ? `<rect x="${fmt(h.x)}" y="${fmt(h.y)}" width="${fmt(h.w)}" height="${fmt(h.h)}"/>`
+    : `<circle cx="${fmt(h.cx)}" cy="${fmt(h.cy)}" r="${fmt(h.r)}"/>`)).join('')
 }
 
 // Shelf packing. items: [{ w, h, ... }]

@@ -19,7 +19,11 @@ const box = {
   thickness: 3,
   fingerWidth: 10,
   kerf: 0.15,
+  kind: 'box',        // 'box' | 'drawer' | 'planter'
   lid: 'open',        // one of LID_TYPES in boxGeometry.js
+  clearance: 1,
+  footHeight: 15,
+  drainage: true,
   cols: 1,
   rows: 1,
   innerDims: false,
@@ -33,6 +37,12 @@ let lastResult = null
 let lidOpen = false
 let savedPresets = []
 let activePreset = null   // id of the preset the current box still matches
+
+const KIND_HINTS = {
+  box: 'Caja con dientes en todas las uniones.',
+  drawer: 'Un mueble abierto adelante y un cajón con agujero para tirar que corre adentro. Las medidas son las de afuera del mueble (o el interior del cajón si marcás "interiores").',
+  planter: 'Caja abierta con patas y piso con pestañas. Ideal como cubremaceta para suculentas o hierbas.',
+}
 
 const LID_HINTS = {
   open:   'Sin tapa.',
@@ -173,6 +183,11 @@ function syncViewer() {
   syncLidButton()
 }
 
+function lidLabel() {
+  const thing = box.kind === 'drawer' ? 'cajón' : 'tapa'
+  return `${lidOpen ? 'Cerrar' : 'Abrir'} ${thing}`
+}
+
 function setPressed(id, on) {
   el(id).classList.toggle('on', on)
   el(id).setAttribute('aria-pressed', String(on))
@@ -184,8 +199,8 @@ function syncLidButton() {
   if (!hasLid) {
     lidOpen = false
     setPressed('box-3d-lid', false)
-    el('box-3d-lid').textContent = 'Abrir tapa'
   }
+  el('box-3d-lid').textContent = lidLabel()
 }
 
 function bindViewerControls() {
@@ -202,7 +217,7 @@ function bindViewerControls() {
   el('box-3d-lid').addEventListener('click', () => {
     lidOpen = !lidOpen
     setPressed('box-3d-lid', lidOpen)
-    el('box-3d-lid').textContent = lidOpen ? 'Cerrar tapa' : 'Abrir tapa'
+    el('box-3d-lid').textContent = lidLabel()
     viewer.setLidOpen(lidOpen)
   })
 
@@ -251,6 +266,14 @@ function setBoxView(view) {
   el('box-preview').hidden = view !== 'sheet'
 }
 
+function syncKindUi() {
+  document.querySelectorAll('.kind-btn').forEach(b => b.classList.toggle('on', b.dataset.kind === box.kind))
+  document.querySelectorAll('[data-kinds]').forEach(node => {
+    node.hidden = !node.dataset.kinds.split(' ').includes(box.kind)
+  })
+  el('box-kind-hint').textContent = KIND_HINTS[box.kind]
+}
+
 // ── PRESETS ────────────────────────────────────────────────────
 
 function syncControls() {
@@ -261,6 +284,10 @@ function syncControls() {
   el('box-finger').value    = box.fingerWidth
   el('box-cols').value      = box.cols
   el('box-rows').value      = box.rows
+  el('box-clearance').value = box.clearance
+  el('box-foot').value      = box.footHeight
+  el('box-drainage').classList.toggle('on', box.drainage)
+  syncKindUi()
   el('box-inner').classList.toggle('on', box.innerDims)
   document.querySelectorAll('.lid-btn').forEach(b => b.classList.toggle('on', b.dataset.lid === box.lid))
   el('box-lid-hint').textContent = LID_HINTS[box.lid]
@@ -268,6 +295,7 @@ function syncControls() {
 
 function applyPreset(preset) {
   PRESET_FIELDS.forEach(field => { if (preset[field] !== undefined) box[field] = preset[field] })
+  if (!preset.kind) box.kind = 'box'   // presets saved before box types existed
   activePreset = preset.id
   lidOpen = false
   syncControls()
@@ -363,10 +391,13 @@ function onInput() {
   box.kerf        = Math.min(1, readNumber('box-kerf', box.kerf))
   box.cols        = readNumber('box-cols', box.cols)
   box.rows        = readNumber('box-rows', box.rows)
+  box.clearance   = Math.min(4, Math.max(0.2, readNumber('box-clearance', box.clearance)))
+  box.footHeight  = readNumber('box-foot', box.footHeight)
   update()
 }
 
 export function initBoxTool() {
+  syncKindUi()
   savedPresets = loadSavedPresets()
   renderPresets()
   el('box-preset-save').addEventListener('click', saveCurrentPreset)
@@ -375,8 +406,25 @@ export function initBoxTool() {
   buildMaterialOptions()
   buildToneOptions()
 
-  ;['box-width', 'box-depth', 'box-height', 'box-thickness', 'box-finger', 'box-kerf', 'box-cols', 'box-rows']
+  ;['box-width', 'box-depth', 'box-height', 'box-thickness', 'box-finger', 'box-kerf', 'box-cols', 'box-rows', 'box-clearance', 'box-foot']
     .forEach(id => el(id).addEventListener('input', onInput))
+
+  document.querySelectorAll('.kind-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      box.kind = btn.dataset.kind
+      clearActivePreset()
+      lidOpen = false
+      syncKindUi()
+      update()
+      if (viewer) viewer.playAssembly()
+    })
+  })
+  el('box-drainage').addEventListener('click', () => {
+    box.drainage = !box.drainage
+    el('box-drainage').classList.toggle('on', box.drainage)
+    clearActivePreset()
+    update()
+  })
 
   el('box-inner').addEventListener('click', () => {
     box.innerDims = !box.innerDims
@@ -406,7 +454,8 @@ export function initBoxTool() {
   })
 
   el('box-dl-btn').addEventListener('click', () => {
-    const name = `caja_${Math.round(box.width)}x${Math.round(box.depth)}x${Math.round(box.height)}_${box.thickness}mm`
+    const prefix = { box: 'caja', drawer: 'cajon', planter: 'maceta' }[box.kind]
+    const name = `${prefix}_${Math.round(box.width)}x${Math.round(box.depth)}x${Math.round(box.height)}_${box.thickness}mm`
     downloadSvgs(exportSvgs, name)
   })
 

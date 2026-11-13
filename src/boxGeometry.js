@@ -180,8 +180,8 @@ const UP = [0, 1, 0]
 //   'sideways' → u along +Z, v along +Y, thickness along −X
 // `motion` marks the parts that move when the lid opens.
 
-// params: { width, depth, height, thickness, fingerWidth, kerf, lid, innerDims, cols, rows }
-export function buildBox(params) {
+// Classic box: params { width, depth, height, thickness, fingerWidth, lid, innerDims, cols, rows }
+function buildRawBox(params) {
   const { thickness: t, fingerWidth, kerf, lid, innerDims } = params
   const cols = Math.min(MAX_DIVISIONS, Math.max(1, Math.round(params.cols || 1)))
   const rows = Math.min(MAX_DIVISIONS, Math.max(1, Math.round(params.rows || 1)))
@@ -350,16 +350,204 @@ export function buildBox(params) {
     ))
   }
 
-  // ── Kerf compensation ──
+  return {
+    panels,
+    thickness: t,
+    lidMotion,
+    cells: { cols, rows },
+    outer: { width: W, depth: D, height: H },
+    inner: { width: innerW, depth: innerD, height: clearTop - t },
+  }
+}
+
+// ── Drawer: a sleeve open at the front with a drawer that slides in ──
+//
+// Dimensions are the sleeve's outside, or the drawer's usable inside when
+// innerDims is set. The drawer is an open-top box built by buildRawBox.
+function buildDrawer(params) {
+  const { thickness: t, fingerWidth } = params
+  const c = Math.max(0.2, params.clearance ?? DRAWER_CLEARANCE)
+  const backGap = 1
+
+  let W = params.width, D = params.depth, H = params.height
+  if (params.innerDims) {
+    W += 4 * t + c
+    H += 3 * t + c
+    D += 3 * t + backGap
+  }
+
+  const dw = W - 2 * t - c
+  const dh = H - 2 * t - c
+  const dd = D - t - backGap
+  const minSide = 3 * t + 6
+  if (Math.min(dw, dh, dd) < minSide) {
+    return { error: `El cajón queda demasiado chico para ese grosor: el mueble necesita al menos ${Math.ceil(minSide + 2 * t + c)} mm por lado.` }
+  }
+
+  const drawer = buildRawBox({ ...params, width: dw, depth: dd, height: dh, lid: 'open', innerDims: false })
+  if (drawer.error) return drawer
+
+  const none = [false, false, false, false]
+  const all = [true, true, true, true]
+  const sleeve = [
+    { id: 'sleeve-bottom', name: 'Mueble: piso', points: panelOutline(W, D, t, ['P', 'F', 'F', 'F'], none, fingerWidth),
+      place: { orient: 'flat', position: [0, 0, D], normal: [0, -1, 0] } },
+    { id: 'sleeve-top', name: 'Mueble: techo', points: panelOutline(W, D, t, ['P', 'F', 'F', 'F'], none, fingerWidth),
+      place: { orient: 'flat', position: [0, H - t, D], normal: [0, 1, 0] } },
+    { id: 'sleeve-back', name: 'Mueble: fondo', points: panelOutline(W, H, t, ['M', 'M', 'M', 'M'], all, fingerWidth),
+      place: { orient: 'upright', position: [0, 0, 0], normal: [0, 0, -1] } },
+  ]
+  const side = () => panelOutline(D, H, t, ['M', 'P', 'M', 'F'], [false, true, true, false], fingerWidth)
+  sleeve.push(
+    { id: 'sleeve-left', name: 'Mueble: lateral 1', points: side(), place: { orient: 'sideways', position: [t, 0, 0], normal: [-1, 0, 0] } },
+    { id: 'sleeve-right', name: 'Mueble: lateral 2', points: side(), place: { orient: 'sideways', position: [W, 0, 0], normal: [1, 0, 0] } },
+  )
+
+  // Drawer pieces sit on the sleeve floor, flush with the front.
+  const offset = [t + c / 2, t, D - dd]
+  const pull = Math.min(DRAWER_PULL_RADIUS, dh * 0.22, dw * 0.12)
+  const drawerPanels = drawer.panels.map(p => ({
+    ...p,
+    id: `drawer-${p.id}`,
+    name: `Cajón: ${p.name.toLowerCase()}`,
+    holes: p.id === 'front' ? [{ cx: dw / 2, cy: dh * 0.62, r: pull }] : p.holes,
+    place: {
+      ...p.place,
+      position: p.place.position.map((v, i) => v + offset[i]),
+      explode: (p.place.explode || 1) * 0.6,
+      motion: true,
+    },
+  }))
+
+  return {
+    panels: [...sleeve, ...drawerPanels],
+    thickness: t,
+    lidMotion: { type: 'slide', distance: dd * 0.75 },
+    cells: drawer.cells,
+    outer: { width: W, depth: D, height: H },
+    inner: drawer.inner,
+  }
+}
+
+// ── Planter: open box on feet, floor held by tabs through wall slots ──
+function tabbedFloor(w, d, t, tabW) {
+  // Inner rectangle [t, w−t] × [t, d−t] with two tabs per edge reaching the outline.
+  const edge = (length, from, to) => [0.3, 0.7].map(f => {
+    const center = from + (to - from) * f
+    return [center - tabW / 2, center + tabW / 2]
+  })
+  const xs = edge(w, t, w - t)
+  const ys = edge(d, t, d - t)
+  const pts = [[t, t]]
+  xs.forEach(([a, b]) => pts.push([a, t], [a, 0], [b, 0], [b, t]))
+  pts.push([w - t, t])
+  ys.forEach(([a, b]) => pts.push([w - t, a], [w, a], [w, b], [w - t, b]))
+  pts.push([w - t, d - t])
+  ;[...xs].reverse().forEach(([a, b]) => pts.push([b, d - t], [b, d], [a, d], [a, d - t]))
+  pts.push([t, d - t])
+  ;[...ys].reverse().forEach(([a, b]) => pts.push([t, b], [0, b], [0, a], [t, a]))
+  return { points: pts, xs, ys }
+}
+
+function withFootNotch(points, length, foot, height) {
+  if (height <= 0) return points
+  // Replaces the straight bottom edge between the feet with a notch.
+  const out = []
+  for (let i = 0; i < points.length; i++) {
+    const p = points[i]
+    out.push(p)
+    const q = points[(i + 1) % points.length]
+    if (p[1] === 0 && q[1] === 0 && p[0] < foot && q[0] > length - foot) {
+      out.push([foot, 0], [foot, height], [length - foot, height], [length - foot, 0])
+    }
+  }
+  return out
+}
+
+function buildPlanter(params) {
+  const { thickness: t, fingerWidth } = params
+  // The floor needs solid wall under its slots, so it never sits lower than 2·t.
+  const wantedFoot = Math.max(0, params.footHeight ?? PLANTER_FOOT)
+  const f = Math.max(wantedFoot, 2 * t)
+  let W = params.width, D = params.depth, H = params.height
+  if (params.innerDims) {
+    W += 2 * t
+    D += 2 * t
+    H += f + t
+  }
+  const minSide = 3 * t + 20
+  if (Math.min(W, D) < minSide || H < f + t + 10) {
+    return { error: `La maceta es demasiado chica: necesita al menos ${Math.ceil(minSide)} mm de lado y más altura que las patas.` }
+  }
+
+  const all = [true, true, true, true]
+  const none = [false, false, false, false]
+  const tabW = Math.min(20, (Math.min(W, D) - 2 * t) * 0.18)
+  const floor = tabbedFloor(W, D, t, tabW)
+  const slotY = f
+  const footW = Math.max(2 * t + 6, Math.min(W, D) * 0.18)
+
+  // Slots line up with the floor tabs (floor coords: x across, y = depth from the front).
+  const frontSlots = floor.xs.map(([a, b]) => ({ x: a, y: slotY, w: b - a, h: t, rect: true }))
+  const sideSlots = floor.ys.map(([a, b]) => ({ x: a, y: slotY, w: b - a, h: t, rect: true }))
+  const notchH = wantedFoot >= 2 * t ? f - 2 : 0
+
+  const wall = (length, edges, corners) => withFootNotch(panelOutline(length, H, t, edges, corners, fingerWidth), length, footW, notchH)
+  const panels = [
+    { id: 'front', name: 'Frente', points: wall(W, ['P', 'M', 'P', 'M'], all), holes: frontSlots,
+      place: { orient: 'upright', position: [0, 0, D - t], normal: [0, 0, 1] } },
+    { id: 'back', name: 'Atrás', points: wall(W, ['P', 'M', 'P', 'M'], all), holes: frontSlots,
+      place: { orient: 'upright', position: [0, 0, 0], normal: [0, 0, -1] } },
+    { id: 'left', name: 'Lateral 1', points: wall(D, ['P', 'F', 'P', 'F'], none), holes: sideSlots,
+      place: { orient: 'sideways', position: [t, 0, 0], normal: [-1, 0, 0] } },
+    { id: 'right', name: 'Lateral 2', points: wall(D, ['P', 'F', 'P', 'F'], none), holes: sideSlots,
+      place: { orient: 'sideways', position: [W, 0, 0], normal: [1, 0, 0] } },
+  ]
+
+  // Floor: flat panel whose local y runs from the front (z = D) backwards.
+  const drain = []
+  if (params.drainage) {
+    const r = PLANTER_DRAIN_RADIUS
+    const cols = Math.max(1, Math.floor((W - 2 * t) / 40))
+    const rows = Math.max(1, Math.floor((D - 2 * t) / 40))
+    for (let i = 0; i < cols; i++) {
+      for (let j = 0; j < rows; j++) {
+        drain.push({ cx: t + ((i + 0.5) * (W - 2 * t)) / cols, cy: t + ((j + 0.5) * (D - 2 * t)) / rows, r })
+      }
+    }
+  }
+  panels.push({ id: 'bottom', name: 'Piso', points: floor.points, holes: drain,
+    place: { orient: 'flat', position: [0, slotY, D], normal: [0, -1, 0], explode: 0.5 } })
+
+  return {
+    panels,
+    thickness: t,
+    lidMotion: null,
+    cells: { cols: 1, rows: 1 },
+    outer: { width: W, depth: D, height: H },
+    inner: { width: W - 2 * t, depth: D - 2 * t, height: H - f - t },
+  }
+}
+
+const DRAWER_CLEARANCE = 1
+const DRAWER_PULL_RADIUS = 10
+const PLANTER_FOOT = 15
+const PLANTER_DRAIN_RADIUS = 3
+
+export const BOX_KINDS = ['box', 'drawer', 'planter']
+
+// Applies kerf: outlines grow by half the kerf, holes and slots shrink by it.
+function finishPanels(panels, kerf) {
   const half = kerf / 2
-  const finished = panels.map(p => {
+  return panels.map(p => {
     const grown = offsetRectilinear(p.points, half)
     const minX = Math.min(...grown.map(q => q[0]))
     const minY = Math.min(...grown.map(q => q[1]))
     const points = grown.map(([x, y]) => [x - minX, y - minY])
     const shapeHoles = p.holes || []
-    // Holes are cut from the inside, so they shrink to keep their nominal size.
-    const holes = shapeHoles.map(h => ({ cx: h.cx - minX, cy: h.cy - minY, r: Math.max(0.1, h.r - half) }))
+    const holes = shapeHoles.map(h => (h.rect
+      ? { rect: true, x: h.x - minX + half, y: h.y - minY + half, w: Math.max(0.1, h.w - kerf), h: Math.max(0.1, h.h - kerf) }
+      : { cx: h.cx - minX, cy: h.cy - minY, r: Math.max(0.1, h.r - half) }))
     return {
       id: p.id,
       name: p.name,
@@ -370,16 +558,18 @@ export function buildBox(params) {
       holes,
       w: Math.max(...points.map(q => q[0])),
       h: Math.max(...points.map(q => q[1])),
-      cutLength: polygonPerimeter(points) + holes.reduce((sum, h) => sum + 2 * Math.PI * h.r, 0),
+      cutLength: polygonPerimeter(points) +
+        holes.reduce((sum, h) => sum + (h.rect ? 2 * (h.w + h.h) : 2 * Math.PI * h.r), 0),
     }
   })
+}
 
-  return {
-    panels: finished,
-    thickness: t,
-    lidMotion,
-    cells: { cols, rows },
-    outer: { width: W, depth: D, height: H },
-    inner: { width: innerW, depth: innerD, height: clearTop - t },
-  }
+// params: { kind: 'box' | 'drawer' | 'planter', width, depth, height, thickness,
+//           fingerWidth, kerf, lid, innerDims, cols, rows, clearance, footHeight, drainage }
+export function buildBox(params) {
+  if (!(params.thickness > 0)) return { error: 'El grosor tiene que ser mayor a 0.' }
+  const kind = params.kind || 'box'
+  const raw = kind === 'drawer' ? buildDrawer(params) : kind === 'planter' ? buildPlanter(params) : buildRawBox(params)
+  if (raw.error) return raw
+  return { ...raw, kind, panels: finishPanels(raw.panels, params.kerf || 0) }
 }

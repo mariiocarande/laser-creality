@@ -284,7 +284,14 @@ export function createBoxViewer(container) {
       const { place } = panel
       const shape = new THREE.Shape(panel.shape.map(([x, y]) => new THREE.Vector2(x, y)))
       panel.shapeHoles.forEach(h => {
-        shape.holes.push(new THREE.Path().absarc(h.cx, h.cy, h.r, 0, Math.PI * 2, true))
+        if (h.rect) {
+          shape.holes.push(new THREE.Path([
+            new THREE.Vector2(h.x, h.y), new THREE.Vector2(h.x, h.y + h.h),
+            new THREE.Vector2(h.x + h.w, h.y + h.h), new THREE.Vector2(h.x + h.w, h.y),
+          ]))
+        } else {
+          shape.holes.push(new THREE.Path().absarc(h.cx, h.cy, h.r, 0, Math.PI * 2, true))
+        }
       })
       const geometry = new THREE.ExtrudeGeometry(shape, { depth: dims.t, bevelEnabled: false, curveSegments: 24 })
       const mesh = new THREE.Mesh(geometry, [faceMaterial, edgeMaterial])

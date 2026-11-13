@@ -13,8 +13,12 @@ export const BOX_PRESETS = [
   { id: 'coasters',  icon: '🍺', name: 'Posavasos',          width: 104, depth: 104, height: 35,  lid: 'open' },
   { id: 'pens',      icon: '✏️', name: 'Lapicero',           width: 80,  depth: 80,  height: 100, lid: 'open' },
   { id: 'desk',      icon: '🗂', name: 'Organizador',        width: 240, depth: 160, height: 55,  lid: 'open', cols: 3, rows: 2 },
+  { id: 'drawer-desk', icon: '🗄', name: 'Cajonera de escritorio', kind: 'drawer', width: 160, depth: 180, height: 70, lid: 'open', innerDims: false, cols: 2 },
+  { id: 'drawer-cards', icon: '📇', name: 'Cajón para tarjetas', kind: 'drawer', width: 110, depth: 150, height: 55, lid: 'open', innerDims: false },
+  { id: 'planter-s', icon: '🪴', name: 'Maceta suculentas', kind: 'planter', width: 110, depth: 110, height: 90, lid: 'open', footHeight: 12 },
+  { id: 'planter-herbs', icon: '🌿', name: 'Jardinera de hierbas', kind: 'planter', width: 300, depth: 120, height: 110, lid: 'open', footHeight: 18 },
   { id: 'screws',    icon: '🔩', name: 'Tornillos y piezas', width: 220, depth: 150, height: 40,  lid: 'open', cols: 4, rows: 3 },
-].map(preset => ({ thickness: 3, fingerWidth: 10, cols: 1, rows: 1, innerDims: true, ...preset }))
+].map(preset => ({ kind: 'box', thickness: 3, fingerWidth: 10, cols: 1, rows: 1, innerDims: true, clearance: 1, footHeight: 15, drainage: true, ...preset }))
 
 export const LID_LABELS = {
   open: 'Abierta',
@@ -26,7 +30,8 @@ export const LID_LABELS = {
 
 // Fields of the box state that a preset (built-in or saved) carries.
 export const PRESET_FIELDS = [
-  'width', 'depth', 'height', 'innerDims', 'thickness', 'fingerWidth', 'lid', 'cols', 'rows',
+  'kind', 'width', 'depth', 'height', 'innerDims', 'thickness', 'fingerWidth', 'lid', 'cols', 'rows',
+  'clearance', 'footHeight', 'drainage',
 ]
 
 const STORAGE_KEY = 'laser-studio:box-presets'
@@ -51,9 +56,12 @@ export function storeSavedPresets(presets) {
   }
 }
 
+const KIND_LABELS = { drawer: 'Cajón', planter: 'Maceta' }
+
 export function describePreset(p) {
   // Kept compact on purpose: it has to fit a narrow preset button.
   const size = `${p.width}×${p.depth}×${p.height}`
   const cells = p.cols * p.rows > 1 ? ` · ${p.cols}×${p.rows}` : ''
-  return `${size} · ${LID_LABELS[p.lid]}${cells}`
+  const kind = KIND_LABELS[p.kind] || LID_LABELS[p.lid]
+  return `${size} · ${kind}${cells}`
 }

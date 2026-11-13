@@ -12,9 +12,10 @@ La app se organiza en pestañas. El selector de **equipo láser** es global: al 
 - Vista previa original vs. procesada y descarga en PNG o SVG
 
 ### 📦 Cajas
+- Tres tipos: **caja**, **cajón deslizante** (mueble abierto adelante + cajón con agujero para tirar y holgura ajustable) y **maceta** (caja abierta con patas, piso con pestañas que entran en ranuras de las paredes y agujeros de drenaje opcionales)
 - Caja rectangular con **finger joints** (dientes), medidas exteriores o interiores
 - Grosor de material, ancho de diente y **compensación de kerf** configurables
-- **Presets**: 12 cajas listas (mazo de cartas, joyero, caja de té, organizador, regalo, etc.) que cargan medidas, tapa y divisores de una; además podés **guardar tus propias configuraciones** en el navegador
+- **Presets**: 16 configuraciones listas (mazo de cartas, joyero, caja de té, organizador, regalo, cajonera, maceta de suculentas, jardinera, etc.) que cargan medidas, tapa y divisores de una; además podés **guardar tus propias configuraciones** en el navegador
 - **Divisores internos**: columnas y filas (hasta 8 × 8) que se encastran en cruz y quedan sueltos dentro de la caja
 - Cinco tapas: **abierta**, **encastrada** (caja cerrada), **suelta** (tapa lisa con tope interior), **corrediza** (corre entre guías pegadas a los laterales) y **con bisagra** (orejas de la tapa que giran en agujeros de los laterales)
 - **Vista 3D interactiva** (three.js) de la caja armada: girar, zoom y mover; vistas de perspectiva, frente, planta y lateral; separar las piezas, abrir la tapa con animación, giro automático, cotas, grilla, ocultar piezas con un click y exportar la vista a PNG. El material elegido cambia el aspecto (veta de madera, acrílico translúcido)
