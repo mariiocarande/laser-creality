@@ -4,6 +4,7 @@ import { buildMachineSelector, updateMachineInfo } from './ui.js'
 import { initImagePrep } from './tools/imagePrep.js'
 import { initBoxTool } from './tools/boxTool.js'
 import { initVectorTool } from './tools/vectorTool.js'
+import { initGenerators } from './tools/generators/index.js'
 import { initCustomTool } from './tools/customTool.js'
 
 function setView(view) {
@@ -30,6 +31,7 @@ function init() {
   initBoxTool()
   initVectorTool()
   initCustomTool()
+  initGenerators()
   setView(state.view)
 }
 

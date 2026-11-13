@@ -29,6 +29,12 @@ La app se organiza en pestañas. El selector de **equipo láser** es global: al 
 - **Contorno de corte alrededor** (recto, redondeado o círculo) con margen y agujero para colgar
 - Ancho final en mm y exportación SVG a tamaño real; todo se procesa en el navegador
 
+### 🧰 Generadores
+Galería de herramientas extra, cada una en su propia ficha:
+- **Halftone**: foto → puntos, cuadrados o líneas como formas vectoriales reales (trama, ángulo, tamaño de punto, brillo, contraste, gamma, invertir)
+- **Mapa de profundidad**: foto → escala de grises para grabado 3D por potencia (suavizado, realce de detalle, niveles); el PNG sale con su DPI guardado para que LightBurn lo importe al tamaño correcto. Se basa en el brillo, no en IA
+- **Rompecabezas**: piezas con encastre clásico y variación aleatoria reproducible, cantidad de piezas por preset o filas × columnas, foto opcional como capa de grabado y tiempo de corte estimado
+
 ### ✨ Personalizar
 - Cargá un diseño base (**SVG**, PNG o JPG) y definí su ancho final en mm — o trabajá solo con texto
 - Lista de **nombres, uno por línea**: se genera una pieza por nombre, todas en la misma plancha
@@ -104,6 +110,10 @@ laser-prep-falcon5w/
 │   ├── imageProcessing.js  # Floyd-Steinberg, Sobel, trazado de contornos, RDP
 │   ├── vectorize.js        # Imagen → contornos cerrados (trazado, simplificación, Bézier)
 │   ├── pieceOutline.js     # Contorno de corte y agujero, compartido por Vectorizar y Personalizar
+│   ├── halftone.js         # Trama halftone como formas vectoriales
+│   ├── puzzle.js           # Líneas de corte del rompecabezas
+│   ├── imageInput.js       # Carga de imágenes compartida (arrastrar, pegar, decodificar)
+│   ├── pngDpi.js           # Escribe la resolución (pHYs) en los PNG exportados
 │   ├── boxGeometry.js      # Geometría de cajas: dientes, esquinas y kerf
 │   ├── boxPresets.js       # Presets de cajas y guardado en localStorage
 │   ├── box3d.js            # Vista 3D de la caja (three.js, se carga bajo demanda)
@@ -112,6 +122,7 @@ laser-prep-falcon5w/
 │       ├── imagePrep.js    # Pestaña Preparar imagen
 │       ├── boxTool.js      # Pestaña Cajas
 │       ├── vectorTool.js   # Pestaña Vectorizar
+│       └── generators/     # Pestaña Generadores: galería, formulario declarativo y cada generador
 │       └── customTool.js   # Pestaña Personalizar
 └── README.md
 ```

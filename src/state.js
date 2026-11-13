@@ -1,5 +1,5 @@
 export const state = {
-  view:          'image',     // 'image' | 'box' | 'vector' | 'custom'
+  view:          'image',     // 'image' | 'box' | 'vector' | 'custom' | 'generators'
   machine:       'creality-falcon5w',
   material:      'wood',
   color:         'medium',
