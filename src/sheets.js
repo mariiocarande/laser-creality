@@ -1,3 +1,5 @@
+import { renderSheetViewer } from './sheetViewer.js'
+
 // Sheet layout, SVG building and download helpers shared by the generators.
 // Units are millimetres; sheets match the selected machine's work area.
 
@@ -6,7 +8,7 @@ export const PART_GAP = 3
 
 const CUT_COLOR = '#ff0000'
 const EXPORT_STROKE = 0.1
-const PREVIEW_STROKE = 0.6
+const PREVIEW_STROKE_PX = 1.4
 
 const fmt = n => Number(n.toFixed(3)).toString()
 
@@ -72,17 +74,18 @@ const escapeXml = s => String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&
 // placements: [{ x, y, w, h, cut, engrave, label }]
 //   cut     → SVG markup drawn with the cut stroke (red hairline)
 //   engrave → SVG markup that carries its own fill
-export function buildSheetSvg(placements, sheetW, sheetH, { preview = false, previewStroke = PREVIEW_STROKE } = {}) {
-  const stroke = preview ? previewStroke : EXPORT_STROKE
+export function buildSheetSvg(placements, sheetW, sheetH, { preview = false } = {}) {
+  // Preview strokes stay a constant width on screen at any zoom (see sheetViewer).
+  const stroke = preview ? PREVIEW_STROKE_PX : EXPORT_STROKE
 
   const body = placements.map(p => {
     const label = preview && p.label
-      ? `<text x="${fmt(p.w / 2)}" y="${fmt(p.h / 2)}" font-family="sans-serif" font-size="${fmt(Math.min(9, p.w / 8, p.h * 0.7))}" fill="#7a5a30" text-anchor="middle" dominant-baseline="middle">${escapeXml(p.label)}</text>`
+      ? `<text class="layer-label" x="${fmt(p.w / 2)}" y="${fmt(p.h / 2)}" font-family="sans-serif" font-size="${fmt(Math.min(9, p.w / 8, p.h * 0.7))}" fill="#7a5a30" fill-opacity="0.85" text-anchor="middle" dominant-baseline="middle">${escapeXml(p.label)}</text>`
       : ''
     return [
       `  <g transform="translate(${fmt(p.x)},${fmt(p.y)})">`,
-      p.engrave ? `    <g>${p.engrave}</g>` : '',
-      p.cut ? `    <g fill="none" stroke="${CUT_COLOR}" stroke-width="${stroke}" stroke-linejoin="round">${p.cut}</g>` : '',
+      p.engrave ? `    <g class="layer-engrave">${p.engrave}</g>` : '',
+      p.cut ? `    <g class="layer-cut" fill="none" stroke="${CUT_COLOR}" stroke-width="${stroke}" stroke-linejoin="round">${p.cut}</g>` : '',
       label,
       '  </g>',
     ].filter(Boolean).join('\n')
@@ -100,30 +103,10 @@ export function buildSheetSvg(placements, sheetW, sheetH, { preview = false, pre
   ].join('\n')
 }
 
-let previewUrls = new WeakMap()
-
-// Renders each sheet as an <img> so uploaded SVG content can never run scripts.
-export function renderSheetPreviews(container, sheetSvgs) {
-  ;(previewUrls.get(container) || []).forEach(url => URL.revokeObjectURL(url))
-  container.innerHTML = ''
-
-  const urls = sheetSvgs.map((svg, i) => {
-    const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }))
-    const figure = document.createElement('figure')
-    figure.className = 'sheet'
-    const img = document.createElement('img')
-    img.src = url
-    img.alt = `Plancha ${i + 1}`
-    figure.appendChild(img)
-    if (sheetSvgs.length > 1) {
-      const caption = document.createElement('figcaption')
-      caption.textContent = `Plancha ${i + 1} de ${sheetSvgs.length}`
-      figure.appendChild(caption)
-    }
-    container.appendChild(figure)
-    return url
-  })
-  previewUrls.set(container, urls)
+// Renders the sheets in the interactive viewer (zoom, rulers, layers).
+// options.pieces: per sheet, [{ x, y, w, h, label }] for names on hover.
+export function renderSheetPreviews(container, sheetSvgs, options) {
+  renderSheetViewer(container, sheetSvgs, options)
 }
 
 export function downloadSvgs(sheetSvgs, baseName) {

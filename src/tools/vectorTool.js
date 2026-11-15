@@ -149,7 +149,7 @@ function update() {
   const docH = Number((piece.h + 2 * DOC_PADDING).toFixed(3))
 
   exportSvg = buildSheetSvg([placement], docW, docH)
-  renderSheetPreviews(el('vec-preview'), [buildSheetSvg([placement], docW, docH, { preview: true, previewStroke: Math.max(0.12, docW / 350) })])
+  renderSheetPreviews(el('vec-preview'), [buildSheetSvg([placement], docW, docH, { preview: true })])
   el('vec-empty').style.display = 'none'
 
   const traceLength = wantsCut ? loops.reduce((sum, loop) => sum + loopLength(loop.points), 0) * scale : 0

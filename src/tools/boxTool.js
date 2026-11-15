@@ -145,6 +145,7 @@ function update() {
   renderSheetPreviews(
     preview,
     sheetPlacements.map(pl => buildSheetSvg(pl, machine.area.w, machine.area.h, { preview: true })),
+    { pieces: sheetPlacements },
   )
 
   const cutLength = result.panels.reduce((sum, p) => sum + p.cutLength, 0)

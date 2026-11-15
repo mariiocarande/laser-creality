@@ -114,7 +114,7 @@ function update() {
     cut: model.border ? `<rect x="0" y="0" width="${W.toFixed(3)}" height="${H.toFixed(3)}"/>` : '',
   }
   exportSvg = buildSheetSvg([placement], W, H)
-  renderSheetPreviews(refs.preview, [buildSheetSvg([placement], W, H, { preview: true, previewStroke: Math.max(0.15, W / 400) })])
+  renderSheetPreviews(refs.preview, [buildSheetSvg([placement], W, H, { preview: true })])
   refs.setEmpty('')
   refs.setInfo(`<strong>${W.toFixed(1)} × ${H.toFixed(1)} mm</strong> &nbsp;·&nbsp; ${count.toLocaleString('es')} formas`)
 

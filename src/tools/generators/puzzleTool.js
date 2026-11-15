@@ -136,7 +136,7 @@ function update() {
     cut: result.lines.map(d => `<path d="${d}"/>`).join('') + result.border,
   }
   exportSvg = buildSheetSvg([placement], W, H)
-  renderSheetPreviews(refs.preview, [buildSheetSvg([placement], W, H, { preview: true, previewStroke: Math.max(0.3, W / 300) })])
+  renderSheetPreviews(refs.preview, [buildSheetSvg([placement], W, H, { preview: true })])
   refs.setEmpty('')
 
   const machine = MACHINES[state.machine]
