@@ -1,6 +1,7 @@
 import { FONTS, loadAllFonts, textBlock, textMarkup } from '../textPaths.js'
 import { state, onMachineChange } from '../state.js'
 import { MACHINES } from '../machines.js'
+import { attachDxf } from '../dxfButton.js'
 import { layoutPiece } from '../pieceOutline.js'
 import { packSheets, buildSheetSvg, renderSheetPreviews, downloadSvgs } from '../sheets.js'
 
@@ -317,6 +318,7 @@ export function initCustomTool() {
   })
 
   el('custom-dl-btn').addEventListener('click', () => downloadSvgs(exportSvgs, 'personalizado'))
+  attachDxf(el('custom-dl-btn'), () => exportSvgs, 'personalizado', showMessage)
 
   onMachineChange(update)
   syncDesignUi()

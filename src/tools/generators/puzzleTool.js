@@ -4,6 +4,7 @@ import { buildSheetSvg, renderSheetPreviews, downloadSvgs } from '../../sheets.j
 import { state } from '../../state.js'
 import { MACHINES, applyMachine } from '../../machines.js'
 import { DB } from '../../db.js'
+import { attachDxf } from '../../dxfButton.js'
 import { controlsHtml, bindControls } from './form.js'
 import { toolLayout, layoutRefs } from './layout.js'
 
@@ -84,6 +85,7 @@ export const puzzleTool = {
     })
     refs.download('svg').addEventListener('click', () =>
       exportSvg && downloadSvgs([exportSvg], `rompecabezas_${model.cols * model.rows}piezas`))
+    attachDxf(refs.download('svg'), () => [exportSvg], () => `rompecabezas_${model.cols * model.rows}piezas`, text => refs.setWarn(text))
     update()
   },
 }

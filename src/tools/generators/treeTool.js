@@ -1,6 +1,7 @@
 import { FONTS, loadFont, textBlock, textMarkup, blockMatrix } from '../../textPaths.js'
 import { traceDrawing } from '../../weld.js'
 import { downloadSvgs } from '../../sheets.js'
+import { attachDxf } from '../../dxfButton.js'
 import { controlsHtml, bindControls } from './form.js'
 import { toolLayout, layoutRefs } from './layout.js'
 import { showPieces, fontFieldOptions } from './output.js'
@@ -63,6 +64,7 @@ export const treeTool = {
     refs.back.addEventListener('click', onBack)
     bindControls(refs.controls, sections, model, () => { clearTimeout(timer); timer = setTimeout(update, 200) })
     refs.download('svg').addEventListener('click', () => downloadSvgs(exportSvgs, 'arbol_familiar'))
+    attachDxf(refs.download('svg'), () => exportSvgs, 'arbol_familiar', text => refs.setWarn(text))
     update()
   },
 }

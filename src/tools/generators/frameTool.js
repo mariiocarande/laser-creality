@@ -1,5 +1,6 @@
 import { FONTS, loadFont, textBlock, textMarkup } from '../../textPaths.js'
 import { downloadSvgs } from '../../sheets.js'
+import { attachDxf } from '../../dxfButton.js'
 import { controlsHtml, bindControls } from './form.js'
 import { toolLayout, layoutRefs } from './layout.js'
 import { showPieces, SCORE_STROKE, fontFieldOptions } from './output.js'
@@ -94,6 +95,7 @@ export const frameTool = {
       timer = setTimeout(update, 150)
     })
     refs.download('svg').addEventListener('click', () => downloadSvgs(exportSvgs, 'portarretratos'))
+    attachDxf(refs.download('svg'), () => exportSvgs, 'portarretratos', text => refs.setWarn(text))
     update()
   },
 }

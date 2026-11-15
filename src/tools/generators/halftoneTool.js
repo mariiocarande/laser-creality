@@ -3,6 +3,7 @@ import { makeSampler, halftonePath, estimateCells, MAX_HALFTONE_CELLS } from '..
 import { buildSheetSvg, renderSheetPreviews, downloadSvgs } from '../../sheets.js'
 import { state } from '../../state.js'
 import { MACHINES } from '../../machines.js'
+import { attachDxf } from '../../dxfButton.js'
 import { controlsHtml, bindControls } from './form.js'
 import { toolLayout, layoutRefs } from './layout.js'
 
@@ -75,6 +76,7 @@ export const halftoneTool = {
       onClear: () => { source = null; update() },
     })
     refs.download('svg').addEventListener('click', () => exportSvg && downloadSvgs([exportSvg], `halftone_${model.pattern}`))
+    attachDxf(refs.download('svg'), () => [exportSvg], () => `halftone_${model.pattern}`, text => refs.setWarn(text))
     update()
   },
 }

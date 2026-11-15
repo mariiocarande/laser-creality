@@ -1,6 +1,7 @@
 import { state, onMachineChange } from '../state.js'
 import { MACHINES } from '../machines.js'
 import { vectorize, loopToPath } from '../vectorize.js'
+import { attachDxf } from '../dxfButton.js'
 import { layoutPiece } from '../pieceOutline.js'
 import { buildSheetSvg, renderSheetPreviews, downloadSvgs } from '../sheets.js'
 
@@ -296,6 +297,7 @@ export function initVectorTool() {
   el('vec-dl-btn').addEventListener('click', () => {
     if (exportSvg) downloadSvgs([exportSvg], 'vectorizado')
   })
+  attachDxf(el('vec-dl-btn'), () => [exportSvg], 'vectorizado', showMessage)
 
   onMachineChange(update)
   syncSourceUi()

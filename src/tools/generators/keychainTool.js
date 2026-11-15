@@ -1,6 +1,7 @@
 import { FONTS, loadFont, textBlock, textMarkup } from '../../textPaths.js'
 import { LETTER_POINTS, normalizeWord } from '../../crossword.js'
 import { downloadSvgs } from '../../sheets.js'
+import { attachDxf } from '../../dxfButton.js'
 import { controlsHtml, bindControls } from './form.js'
 import { toolLayout, layoutRefs } from './layout.js'
 import { showPieces, SCORE_STROKE, fontFieldOptions } from './output.js'
@@ -56,6 +57,7 @@ export const keychainTool = {
     refs.back.addEventListener('click', onBack)
     bindControls(refs.controls, sections, model, () => { clearTimeout(timer); timer = setTimeout(update, 150) })
     refs.download('svg').addEventListener('click', () => downloadSvgs(exportSvgs, 'llaveros'))
+    attachDxf(refs.download('svg'), () => exportSvgs, 'llaveros', text => refs.setWarn(text))
     update()
   },
 }

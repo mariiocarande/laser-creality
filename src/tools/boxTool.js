@@ -1,6 +1,7 @@
 import { DB } from '../db.js'
 import { state, onMachineChange } from '../state.js'
 import { MACHINES, applyMachine } from '../machines.js'
+import { attachDxf } from '../dxfButton.js'
 import { buildBox } from '../boxGeometry.js'
 import {
   BOX_PRESETS, PRESET_FIELDS, describePreset, loadSavedPresets, storeSavedPresets,
@@ -459,6 +460,7 @@ export function initBoxTool() {
     const name = `${prefix}_${Math.round(box.width)}x${Math.round(box.depth)}x${Math.round(box.height)}_${box.thickness}mm`
     downloadSvgs(exportSvgs, name)
   })
+  attachDxf(el('box-dl-btn'), () => exportSvgs, () => `${{ box: 'caja', drawer: 'cajon', planter: 'maceta' }[box.kind]}_${Math.round(box.width)}x${Math.round(box.depth)}x${Math.round(box.height)}`, showMessage)
 
   document.querySelectorAll('.box-view-tab').forEach(tab => {
     tab.addEventListener('click', () => setBoxView(tab.dataset.boxview))
