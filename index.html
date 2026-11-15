@@ -291,6 +291,15 @@
             </div>
             <p class="hint" id="box-kind-hint"></p>
 
+            <div data-kinds="box">
+              <div class="sec-lbl">Orientación</div>
+              <div class="choice-row two">
+                <button class="choice-btn orient-btn on" data-orient="horizontal">▭ Horizontal</button>
+                <button class="choice-btn orient-btn" data-orient="vertical">▯ Vertical (dispensador)</button>
+              </div>
+              <p class="hint" id="box-orient-hint"></p>
+            </div>
+
             <div class="sec-lbl">Medidas (mm)</div>
             <div class="field-grid three">
               <label class="field"><span class="field-lbl">Ancho</span>
@@ -363,6 +372,34 @@
             <p class="hint" id="box-lid-hint">Sin tapa.</p>
             </div>
 
+            <div data-kinds="box drawer planter">
+              <div class="tog-row">
+                <span class="tog-lbl">Para colgar en la pared</span>
+                <button class="tog" id="box-wall" aria-label="Para colgar en la pared"></button>
+              </div>
+              <p class="hint">Agrega dos ojales tipo bocallave en la pieza de atrás: atornillás a la pared, apoyás la caja y la bajás para trabarla.</p>
+            </div>
+
+            <div data-kinds="box">
+              <div class="sec-lbl">Diseño de la tapa</div>
+              <div class="choice-row design-grid" id="box-designs"></div>
+              <p class="hint" id="box-decor-hint"></p>
+              <div id="box-decor-text-fields">
+                <label class="field"><span class="field-lbl">Título</span>
+                  <input class="text-input" id="box-decor-title" type="text" maxlength="30" placeholder="Té"></label>
+                <label class="field"><span class="field-lbl">Subtítulo</span>
+                  <input class="text-input" id="box-decor-subtitle" type="text" maxlength="40" placeholder="Hebras seleccionadas"></label>
+              </div>
+              <label class="field" id="box-decor-labels-field"><span class="field-lbl">Nombres de los compartimentos (uno por línea, en orden)</span>
+                <textarea class="text-input" id="box-decor-labels" rows="4" placeholder="Verde&#10;Negro&#10;Manzanilla"></textarea></label>
+            </div>
+
+            <div class="sec-lbl">Texto en el frente</div>
+            <label class="field"><span class="field-lbl">Se graba en la pieza de adelante (opcional)</span>
+              <input class="text-input" id="box-decor-front" type="text" maxlength="30" placeholder="Tea Time"></label>
+            <label class="field"><span class="field-lbl">Letra de los textos</span>
+              <select id="box-decor-font" class="machine-select"></select></label>
+
           </div>
         </div>
       </div>
@@ -428,7 +465,7 @@
             <div class="note-box warn-box" id="box-warn" style="display:none"></div>
             <div class="note-box">
               <strong>📝 Nota: </strong>
-              El SVG sale en milímetros reales, con las piezas acomodadas en el área de tu máquina. Las líneas rojas son corte. Probá primero el encastre con una caja chica.
+              El SVG sale en milímetros reales, con las piezas acomodadas en el área de tu máquina. Rojo = corte, negro = grabado. Los grabados de la tapa y el frente aparecen girados en el archivo a propósito: grabá esa cara hacia arriba y al armar dala vuelta de izquierda a derecha, así queda derecho del lado de afuera. Probá primero el encastre con una caja chica.
             </div>
             <button class="dl-btn" id="box-dl-btn" disabled>⬇ Descargar SVG de la caja</button>
           </div>

@@ -158,6 +158,17 @@ function notchedStrip(length, h, centers, t, fromTop) {
 }
 
 const LID_CLEARANCE = 0.4     // loose-fit gap for lids and their stops
+const WINDOW_FRACTION = 0.55  // window size relative to the lid
+const WINDOW_OVERLAP = 8      // how far the clear insert reaches past the window
+const WINDOW_LIP_MARGIN = 5   // solid lip kept around the insert
+const WINDOW_INSERT_SLACK = 0.4
+const PULL_SLOT_WIDTH = 0.72   // fraction of the column width
+const PULL_SLOT_HEIGHT = 26
+const PULL_SLOT_RAISE = 2      // mm above the bottom joint
+const KEYHOLE_HEAD_R = 4.5      // screw head passes here
+const KEYHOLE_SLOT_W = 4.6      // screw shank slides up here
+const KEYHOLE_SLOT_LEN = 10
+const KEYHOLE_FROM_TOP = 16
 const FIT_CLEARANCE = 0.4     // total gap for dividers and rails along their length
 const NOTCH_SLACK = 0.25
 const DIVIDER_HEADROOM = 0.5
@@ -184,7 +195,9 @@ const UP = [0, 1, 0]
 function buildRawBox(params) {
   const { thickness: t, fingerWidth, kerf, lid, innerDims } = params
   const cols = Math.min(MAX_DIVISIONS, Math.max(1, Math.round(params.cols || 1)))
-  const rows = Math.min(MAX_DIVISIONS, Math.max(1, Math.round(params.rows || 1)))
+  const vertical = params.orientation === 'vertical'
+  // A vertical dispenser stacks bags in columns, so it never has rows.
+  const rows = vertical ? 1 : Math.min(MAX_DIVISIONS, Math.max(1, Math.round(params.rows || 1)))
 
   if (!(t > 0)) return { error: 'El grosor tiene que ser mayor a 0.' }
 
@@ -268,18 +281,46 @@ function buildRawBox(params) {
       { orient: 'flat', position: [0, H - t, D], normal: UP, motion: true })
   }
 
+  let windowRect = null
   if (lid === 'lift') {
     clearTop = H - t
     lidMotion = { type: 'hinge', pivot: [H, 0] }
+    const lipW = innerW - LID_CLEARANCE
+    const lipD = innerD - LID_CLEARANCE
+    const lipX = t + LID_CLEARANCE / 2
+    const lipZ = D - t - LID_CLEARANCE / 2
+    const lidHoles = []
+    const lipHoles = []
+
+    // Window: a hole in the lid with a clear insert that sits flush inside a
+    // matching hole in the lip underneath (so the lid stays flat).
+    if (params.window) {
+      const ww = Math.max(20, W * (params.window.width ?? WINDOW_FRACTION))
+      const wh = Math.max(15, D * (params.window.height ?? WINDOW_FRACTION))
+      const overlap = Math.min(WINDOW_OVERLAP, (lipW - ww) / 2 - WINDOW_LIP_MARGIN, (lipD - wh) / 2 - WINDOW_LIP_MARGIN)
+      if (overlap >= 2) {
+        const iw = ww + 2 * overlap, ih = wh + 2 * overlap
+        windowRect = { x: (W - ww) / 2, y: (D - wh) / 2, w: ww, h: wh }
+        lidHoles.push({ rect: true, ...windowRect })
+        // Lip coords: u from lipX, v measured back from z = lipZ; window centre at (W/2, z = D/2).
+        const cu = W / 2 - lipX, cv = lipZ - D / 2
+        const slack = WINDOW_INSERT_SLACK
+        lipHoles.push({ rect: true, x: cu - iw / 2 - slack / 2, y: cv - ih / 2 - slack / 2, w: iw + slack, h: ih + slack })
+        add('window-insert', 'Ventana (acrílico)', rectangle(iw, ih), {
+          orient: 'flat', position: [W / 2 - iw / 2, H - t, D / 2 + ih / 2], normal: UP, explode: 1.0, motion: true,
+        }, { material: 'acrylic' })
+      }
+    }
+
     add('lid', 'Tapa', rectangle(W, D),
-      { orient: 'flat', position: [0, H, D], normal: UP, explode: 1.6, motion: true })
-    add('lid-lip', 'Tope de tapa', rectangle(innerW - LID_CLEARANCE, innerD - LID_CLEARANCE), {
+      { orient: 'flat', position: [0, H, D], normal: UP, explode: 1.6, motion: true }, { holes: lidHoles })
+    add('lid-lip', 'Tope de tapa', rectangle(lipW, lipD), {
       orient: 'flat',
-      position: [t + LID_CLEARANCE / 2, H - t, D - t - LID_CLEARANCE / 2],
+      position: [lipX, H - t, lipZ],
       normal: UP,
       explode: 1.25,
       motion: true,
-    })
+    }, { holes: lipHoles })
   }
 
   if (lid === 'slide') {
@@ -321,6 +362,21 @@ function buildRawBox(params) {
     rail('ledge-r', 'Apoyo de tapa 2', ledgeLen, clearTop, ledgeZ, false)
   }
 
+  // ── Dispenser openings: one pull slot at the bottom of each column ──
+  if (vertical) {
+    const cellW = (innerW - (cols - 1) * t) / cols
+    const slotW = Math.min(cellW * PULL_SLOT_WIDTH, 70)
+    const slotH = Math.min(PULL_SLOT_HEIGHT, (H - 2 * t) * 0.25)
+    const front = panels.find(p => p.id === 'front')
+    front.holes = (front.holes || []).concat(Array.from({ length: cols }, (_, i) => ({
+      rect: true,
+      x: t + i * (cellW + t) + (cellW - slotW) / 2,
+      y: t + PULL_SLOT_RAISE,
+      w: slotW,
+      h: slotH,
+    })))
+  }
+
   // ── Dividers ──
   if (cols > 1 || rows > 1) {
     const dividerH = clearTop - t - (lid === 'open' ? 0 : DIVIDER_HEADROOM)
@@ -355,6 +411,7 @@ function buildRawBox(params) {
     thickness: t,
     lidMotion,
     cells: { cols, rows },
+    window: windowRect,
     outer: { width: W, depth: D, height: H },
     inner: { width: innerW, depth: innerD, height: clearTop - t },
   }
@@ -545,31 +602,72 @@ function finishPanels(panels, kerf) {
     const minY = Math.min(...grown.map(q => q[1]))
     const points = grown.map(([x, y]) => [x - minX, y - minY])
     const shapeHoles = p.holes || []
-    const holes = shapeHoles.map(h => (h.rect
-      ? { rect: true, x: h.x - minX + half, y: h.y - minY + half, w: Math.max(0.1, h.w - kerf), h: Math.max(0.1, h.h - kerf) }
-      : { cx: h.cx - minX, cy: h.cy - minY, r: Math.max(0.1, h.r - half) }))
+    const holes = shapeHoles.map(h => {
+      if (h.poly) return { poly: h.poly.map(([x, y]) => [x - minX, y - minY]) }
+      return h.rect
+        ? { rect: true, x: h.x - minX + half, y: h.y - minY + half, w: Math.max(0.1, h.w - kerf), h: Math.max(0.1, h.h - kerf) }
+        : { cx: h.cx - minX, cy: h.cy - minY, r: Math.max(0.1, h.r - half) }
+    })
     return {
       id: p.id,
       name: p.name,
       shape: p.points,          // nominal outline (no kerf), used by the 3D preview
       shapeHoles,
       place: p.place,
+      material: p.material,
       points,
       holes,
       w: Math.max(...points.map(q => q[0])),
       h: Math.max(...points.map(q => q[1])),
       cutLength: polygonPerimeter(points) +
-        holes.reduce((sum, h) => sum + (h.rect ? 2 * (h.w + h.h) : 2 * Math.PI * h.r), 0),
+        holes.reduce((sum, h) => sum + (h.poly ? polygonPerimeter(h.poly) : h.rect ? 2 * (h.w + h.h) : 2 * Math.PI * h.r), 0),
     }
   })
 }
 
 // params: { kind: 'box' | 'drawer' | 'planter', width, depth, height, thickness,
 //           fingerWidth, kerf, lid, innerDims, cols, rows, clearance, footHeight, drainage }
+// Keyhole hanger: a round entry for the screw head with a slot above it.
+// Returned as a polygon in panel coordinates (v up).
+export function keyholePolygon(cx, cv) {
+  const r = KEYHOLE_HEAD_R, half = KEYHOLE_SLOT_W / 2
+  const join = Math.sqrt(r * r - half * half)
+  const top = cv + join + KEYHOLE_SLOT_LEN
+  const pts = [[cx - half, cv + join], [cx - half, top]]
+  for (let i = 1; i < 8; i++) {
+    const a = Math.PI - (i / 8) * Math.PI
+    pts.push([cx + Math.cos(a) * half, top + Math.sin(a) * half])
+  }
+  pts.push([cx + half, top], [cx + half, cv + join])
+  // Big circle, going round the bottom from the right join back to the left one.
+  const start = Math.asin(join / r)
+  const end = Math.PI - start
+  const steps = 20
+  for (let i = 1; i < steps; i++) {
+    const a = start - (i / steps) * (2 * Math.PI - (end - start))
+    pts.push([cx + Math.cos(a) * r, cv + Math.sin(a) * r])
+  }
+  return pts
+}
+
+function addWallMount(panels) {
+  const back = panels.find(p => p.id === 'back' || p.id === 'sleeve-back')
+  if (!back) return false
+  const xs = back.points.map(q => q[0]), ys = back.points.map(q => q[1])
+  const w = Math.max(...xs), h = Math.max(...ys)
+  const cv = h - KEYHOLE_FROM_TOP - KEYHOLE_SLOT_LEN
+  if (cv < KEYHOLE_HEAD_R + 6 || w < 50) return false
+  back.holes = (back.holes || []).concat(
+    [0.25, 0.75].map(f => ({ poly: keyholePolygon(w * f, cv) })),
+  )
+  return true
+}
+
 export function buildBox(params) {
   if (!(params.thickness > 0)) return { error: 'El grosor tiene que ser mayor a 0.' }
   const kind = params.kind || 'box'
   const raw = kind === 'drawer' ? buildDrawer(params) : kind === 'planter' ? buildPlanter(params) : buildRawBox(params)
   if (raw.error) return raw
-  return { ...raw, kind, panels: finishPanels(raw.panels, params.kerf || 0) }
+  const wallMount = params.wallMount ? addWallMount(raw.panels) : false
+  return { ...raw, kind, wallMount, panels: finishPanels(raw.panels, params.kerf || 0) }
 }

@@ -21,52 +21,88 @@ export function rotatePoints(points, h) {
 }
 
 export function rotateHoles(holes, h) {
-  return holes.map(hole => (hole.rect
-    ? { rect: true, x: h - hole.y - hole.h, y: hole.x, w: hole.h, h: hole.w }
-    : { cx: h - hole.cy, cy: hole.cx, r: hole.r }))
+  return holes.map(hole => {
+    if (hole.poly) return { poly: hole.poly.map(([x, y]) => [h - y, x]) }
+    return hole.rect
+      ? { rect: true, x: h - hole.y - hole.h, y: hole.x, w: hole.h, h: hole.w }
+      : { cx: h - hole.cy, cy: hole.cx, r: hole.r }
+  })
 }
 
 export function holesToMarkup(holes) {
-  return holes.map(h => (h.rect
-    ? `<rect x="${fmt(h.x)}" y="${fmt(h.y)}" width="${fmt(h.w)}" height="${fmt(h.h)}"/>`
-    : `<circle cx="${fmt(h.cx)}" cy="${fmt(h.cy)}" r="${fmt(h.r)}"/>`)).join('')
+  return holes.map(h => {
+    if (h.poly) return `<path d="${pointsToPath(h.poly)}"/>`
+    return h.rect
+      ? `<rect x="${fmt(h.x)}" y="${fmt(h.y)}" width="${fmt(h.w)}" height="${fmt(h.h)}"/>`
+      : `<circle cx="${fmt(h.cx)}" cy="${fmt(h.cy)}" r="${fmt(h.r)}"/>`
+  }).join('')
 }
 
-// Shelf packing. items: [{ w, h, ... }]
-// Returns { sheets: [[{ item, x, y, rotated }]], oversize: [item] }
+// Shelf packing with first fit across every open shelf and sheet.
+// items: [{ w, h, ... }]
+// Returns { sheets: [[{ item, x, y, w, h, rotated }]], oversize: [item] }
 export function packSheets(items, sheetW, sheetH, { allowRotate = true } = {}) {
   const usableW = sheetW - 2 * SHEET_MARGIN
   const usableH = sheetH - 2 * SHEET_MARGIN
   const oversize = []
+  const sheets = []   // { shelves: [{ y, h, x }], used: number, placed: [] }
 
-  const oriented = []
-  items.forEach(item => {
-    const fits      = item.w <= usableW && item.h <= usableH
-    const fitsTurned = allowRotate && item.h <= usableW && item.w <= usableH
-    if (!fits && !fitsTurned) { oversize.push(item); return }
-    // Prefer the landscape orientation so shelves stay short.
-    const rotated = fitsTurned && (!fits || item.h > item.w)
-    oriented.push({ item, rotated, w: rotated ? item.h : item.w, h: rotated ? item.w : item.h })
+  const orientations = item => {
+    const list = [{ w: item.w, h: item.h, rotated: false }]
+    if (allowRotate && Math.abs(item.w - item.h) > 1e-6) list.push({ w: item.h, h: item.w, rotated: true })
+    return list.filter(o => o.w <= usableW && o.h <= usableH)
+  }
+
+  const order = items.slice().sort((a, b) => Math.max(b.w, b.h) - Math.max(a.w, a.h) || b.w * b.h - a.w * a.h)
+
+  order.forEach(item => {
+    const options = orientations(item)
+    if (!options.length) { oversize.push(item); return }
+
+    // 1. An existing shelf with room, least wasted height first.
+    let best = null
+    sheets.forEach((sheet, si) => sheet.shelves.forEach(shelf => options.forEach(o => {
+      if (shelf.x + o.w > usableW || o.h > shelf.h) return
+      const waste = shelf.h - o.h
+      if (!best || waste < best.waste - 1e-6 || (Math.abs(waste - best.waste) < 1e-6 && si < best.si)) {
+        best = { sheet, shelf, o, waste, si }
+      }
+    })))
+    if (best) {
+      place(best.sheet, best.shelf, best.o, item)
+      return
+    }
+
+    // 2. A new shelf on an existing sheet: the flattest orientation that fits.
+    const flat = options.slice().sort((a, b) => a.h - b.h)
+    for (const sheet of sheets) {
+      const y = sheet.used ? sheet.used + PART_GAP : 0
+      const o = flat.find(c => y + c.h <= usableH)
+      if (o) {
+        const shelf = { y, h: o.h, x: 0 }
+        sheet.shelves.push(shelf)
+        sheet.used = y + o.h
+        place(sheet, shelf, o, item)
+        return
+      }
+    }
+
+    // 3. A new sheet.
+    const sheet = { shelves: [], used: 0, placed: [] }
+    sheets.push(sheet)
+    const o = flat[0]
+    const shelf = { y: 0, h: o.h, x: 0 }
+    sheet.shelves.push(shelf)
+    sheet.used = o.h
+    place(sheet, shelf, o, item)
   })
 
-  oriented.sort((a, b) => b.h - a.h)
+  function place(sheet, shelf, o, item) {
+    sheet.placed.push({ item, rotated: o.rotated, w: o.w, h: o.h, x: shelf.x + SHEET_MARGIN, y: shelf.y + SHEET_MARGIN })
+    shelf.x += o.w + PART_GAP
+  }
 
-  const sheets = []
-  let sheet = null
-  let x = 0, y = 0, shelfH = 0
-
-  const newSheet = () => { sheet = []; sheets.push(sheet); x = 0; y = 0; shelfH = 0 }
-
-  oriented.forEach(o => {
-    if (!sheet) newSheet()
-    if (x > 0 && x + o.w > usableW) { x = 0; y += shelfH + PART_GAP; shelfH = 0 }
-    if (y + o.h > usableH) newSheet()
-    sheet.push({ item: o.item, rotated: o.rotated, w: o.w, h: o.h, x: x + SHEET_MARGIN, y: y + SHEET_MARGIN })
-    x += o.w + PART_GAP
-    shelfH = Math.max(shelfH, o.h)
-  })
-
-  return { sheets, oversize }
+  return { sheets: sheets.map(s => s.placed), oversize }
 }
 
 const escapeXml = s => String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]))

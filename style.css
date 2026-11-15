@@ -1039,6 +1039,9 @@ input[type="range"]::-webkit-slider-thumb {
 .choice-row { display: grid; gap: 8px; margin-bottom: 12px; }
 .choice-row.three { grid-template-columns: repeat(3, 1fr); }
 .choice-row.four  { grid-template-columns: repeat(4, 1fr); }
+.choice-row.two   { grid-template-columns: repeat(2, 1fr); }
+.choice-row.design-grid { grid-template-columns: repeat(4, 1fr); }
+[id='box-decor-text-fields'][hidden], [id='box-decor-labels-field'][hidden] { display: none; }
 
 .choice-btn {
   background: var(--bg3);
@@ -1127,7 +1130,23 @@ input[type="range"]::-webkit-slider-thumb {
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   margin-bottom: 10px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
 }
+
+.preset-group {
+  grid-column: 1 / -1;
+  font-family: var(--fm);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin: 6px 0 -2px;
+}
+
+.preset-group:first-child { margin-top: 0; }
 
 .preset-btn {
   position: relative;

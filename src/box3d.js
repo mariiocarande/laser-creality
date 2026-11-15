@@ -392,7 +392,9 @@ export function createBoxViewer(container) {
       const { place } = panel
       const shape = new THREE.Shape(panel.shape.map(([x, y]) => new THREE.Vector2(x, y)))
       panel.shapeHoles.forEach(h => {
-        if (h.rect) {
+        if (h.poly) {
+          shape.holes.push(new THREE.Path(h.poly.map(([x, y]) => new THREE.Vector2(x, y))))
+        } else if (h.rect) {
           shape.holes.push(new THREE.Path([
             new THREE.Vector2(h.x, h.y), new THREE.Vector2(h.x, h.y + h.h),
             new THREE.Vector2(h.x + h.w, h.y + h.h), new THREE.Vector2(h.x + h.w, h.y),
