@@ -1259,6 +1259,23 @@ input[type="range"]::-webkit-slider-thumb {
 .chip:disabled { opacity: 0.35; cursor: not-allowed; }
 .chip:focus-visible { outline: 2px solid var(--accent2); outline-offset: 2px; }
 
+.viewer-tip {
+  position: absolute;
+  z-index: 4;
+  display: none;
+  pointer-events: none;
+  font-family: var(--fm);
+  font-size: 10px;
+  color: var(--text);
+  background: rgba(12, 19, 24, 0.92);
+  border: 1px solid var(--accent2);
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.viewer3d:fullscreen { height: 100vh; border-radius: 0; }
+
 .viewer-restore {
   position: absolute;
   top: 12px;

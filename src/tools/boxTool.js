@@ -236,6 +236,15 @@ function bindViewerControls() {
     })
   })
 
+  el('box-3d-full').addEventListener('click', () => {
+    const stage = el('box-3d')
+    if (document.fullscreenElement) document.exitFullscreen()
+    else if (stage.requestFullscreen) stage.requestFullscreen().catch(() => {})
+  })
+  document.addEventListener('fullscreenchange', () => {
+    el('box-3d-full').classList.toggle('on', document.fullscreenElement === el('box-3d'))
+  })
+
   el('box-3d-png').addEventListener('click', () => {
     const a = document.createElement('a')
     a.download = 'caja_3d.png'
