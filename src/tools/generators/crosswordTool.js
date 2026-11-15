@@ -55,6 +55,7 @@ export const crosswordTool = {
   icon: '🔤',
   title: 'Crucigrama familiar',
   description: 'Los nombres de la familia cruzados como en el juego de palabras, en fichas con puntaje. Para un cartel de pared.',
+  categories: ['madrepadre', 'regalos'],
 
   mount(root, { onBack }) {
     root.innerHTML = toolLayout({

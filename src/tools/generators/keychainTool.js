@@ -43,6 +43,7 @@ export const keychainTool = {
   icon: '🔑',
   title: 'Llavero de fichas',
   description: 'Un nombre en fichas tipo juego de palabras, en una sola pieza con oreja y agujero para la argolla.',
+  categories: ['regalos', 'madrepadre'],
 
   mount(root, { onBack }) {
     root.innerHTML = toolLayout({

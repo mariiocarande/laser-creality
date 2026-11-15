@@ -605,6 +605,12 @@ function onInput() {
 }
 
 export function initBoxTool() {
+  // The kerf test generator can hand its result over.
+  window.addEventListener('laser:set-kerf', e => {
+    box.kerf = e.detail.kerf
+    el('box-kerf').value = box.kerf
+    update()
+  })
   bindDecorUi()
   document.querySelectorAll('.orient-btn').forEach(btn => {
     btn.addEventListener('click', () => {

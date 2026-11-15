@@ -48,6 +48,7 @@ export const drinkMarkerTool = {
   icon: '🥂',
   title: 'Marcadores de copa',
   description: 'Etiquetas con el nombre de cada invitado que se encajan en el borde de la copa. Para casamientos y fiestas.',
+  categories: ['cumple', 'sanvalentin'],
 
   mount(root, { onBack }) {
     root.innerHTML = toolLayout({

@@ -74,6 +74,7 @@ export const frameTool = {
   icon: '🖼',
   title: 'Portarretratos',
   description: 'Marco para cualquier tamaño de foto, clásico o tipo Polaroid, con texto grabado, tapa trasera y pie.',
+  categories: ['madrepadre', 'sanvalentin', 'regalos'],
 
   mount(root, { onBack }) {
     root.innerHTML = toolLayout({

@@ -57,6 +57,7 @@ export const puzzleTool = {
   icon: '🧩',
   title: 'Rompecabezas',
   description: 'Foto opcional + piezas con encastre clásico. SVG con líneas de corte continuas.',
+  categories: ['imagen', 'regalos'],
 
   mount(root, { onBack }) {
     root.innerHTML = toolLayout({

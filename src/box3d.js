@@ -617,8 +617,39 @@ export function createBoxViewer(container) {
   resize()
   frame()
 
+  // Warm light inside the box (lanterns): casts the cut-out pattern on the floor.
+  let glow = null
+  function setGlow(on) {
+    if (on && !glow) {
+      const light = new THREE.PointLight(0xffb15a, 0, 0, 1.6)
+      light.castShadow = true
+      light.shadow.mapSize.set(1024, 1024)
+      light.shadow.bias = -0.002
+      const flame = new THREE.Mesh(
+        new THREE.SphereGeometry(1, 16, 12),
+        new THREE.MeshBasicMaterial({ color: 0xffd08a }),
+      )
+      glow = new THREE.Group()
+      glow.add(light, flame)
+      glow.userData = { light, flame }
+      scene.add(glow)
+    }
+    if (!glow) return
+    glow.visible = on
+    if (dims) {
+      const r = Math.max(4, Math.min(dims.W, dims.D) * 0.06)
+      glow.position.set(0, -dims.H / 2 + dims.t + r * 2.2, 0)
+      glow.userData.flame.scale.set(r * 0.6, r, r * 0.6)
+      glow.userData.light.intensity = on ? maxDim * maxDim * 6 : 0
+      glow.userData.light.shadow.camera.far = maxDim * 6
+    }
+    scene.environmentIntensity = on ? 0.18 : 0.4
+    render()
+  }
+
   return {
     setBox,
+    setGlow,
     setMaterial,
     clear() { clear(); dims = null; render() },
     setExplode(value) { anim.explode.target = anim.explode.current = value; applyPose(); render() },

@@ -56,6 +56,7 @@ export const qrTagTool = {
   icon: '▦',
   title: 'Etiqueta con QR',
   description: 'Un llavero o cartelito con un QR grabado: link, wifi, redes o menú, con texto y agujero para colgar.',
+  categories: ['regalos'],
 
   mount(root, { onBack }) {
     root.innerHTML = toolLayout({

@@ -55,6 +55,7 @@ export const halftoneTool = {
   icon: '◉',
   title: 'Halftone',
   description: 'Foto → puntos, cuadrados o líneas reales en SVG. Cada punto es una forma, listo para grabar.',
+  categories: ['imagen'],
 
   mount(root, { onBack }) {
     root.innerHTML = toolLayout({

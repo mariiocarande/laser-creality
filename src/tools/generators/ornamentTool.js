@@ -56,6 +56,7 @@ export const ornamentTool = {
   icon: '🎄',
   title: 'Esferas con nombre',
   description: 'Esferas, discos o estrellas para el árbol con el nombre grabado o calado. Una por cada nombre.',
+  categories: ['navidad'],
 
   mount(root, { onBack }) {
     root.innerHTML = toolLayout({

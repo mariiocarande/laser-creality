@@ -50,6 +50,7 @@ export const treeTool = {
   icon: '🌲',
   title: 'Árbol familiar',
   description: 'Un arbolito hecho con los nombres de la familia: el más corto arriba, el año en el tronco y una estrella para colgar.',
+  categories: ['navidad'],
 
   mount(root, { onBack }) {
     root.innerHTML = toolLayout({
