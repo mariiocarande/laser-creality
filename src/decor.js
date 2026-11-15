@@ -34,6 +34,20 @@ function circle(cx, cy, r) {
   return `M${f(cx - r)} ${f(cy)}a${f(r)} ${f(r)} 0 1 0 ${f(2 * r)} 0a${f(r)} ${f(r)} 0 1 0 ${f(-2 * r)} 0Z`
 }
 
+const fillEO = d => `<path fill="#000000" fill-rule="evenodd" d="${d}"/>`
+
+// Leaf with a central vein left unengraved (even-odd fill).
+function veinedLeaf(x, y, angle, len, width = 0.4) {
+  const c = Math.cos(angle), s = Math.sin(angle)
+  const v = len * 0.035
+  const nx = -s * v, ny = c * v
+  const a = [x + c * len * 0.12, y + s * len * 0.12]
+  const b = [x + c * len * 0.82, y + s * len * 0.82]
+  const vein = `M${f(a[0] + nx)} ${f(a[1] + ny)}L${f(b[0])} ${f(b[1])}L${f(a[0] - nx)} ${f(a[1] - ny)}Z`
+  // Own element: overlapping leaves must not cancel each other out.
+  return fillEO(leaf(x, y, angle, len, width) + vein)
+}
+
 // Almond leaf from (x, y) pointing at `angle`, length `len`.
 function leaf(x, y, angle, len, width = 0.38) {
   const c = Math.cos(angle), s = Math.sin(angle)
@@ -52,39 +66,75 @@ function sprig(x, y, len, angle, bend, count) {
   const ctrl = [x + c * len * 0.5 - s * bend, y + s * len * 0.5 + c * bend]
   let out = line(`M${f(x)} ${f(y)}Q${f(ctrl[0])} ${f(ctrl[1])} ${f(end[0])} ${f(end[1])}`)
   let leaves = ''
+  let berries = ''
   for (let i = 1; i <= count; i++) {
     const t = i / (count + 1)
     const px = (1 - t) * (1 - t) * x + 2 * (1 - t) * t * ctrl[0] + t * t * end[0]
     const py = (1 - t) * (1 - t) * y + 2 * (1 - t) * t * ctrl[1] + t * t * end[1]
-    const side = i % 2 ? 1 : -1
-    const size = len * (0.24 - 0.1 * t)
-    leaves += leaf(px, py, angle + side * 0.85, size)
+    // Leaves in pairs, slightly offset, smaller toward the tip.
+    const size = len * (0.26 - 0.12 * t)
+    leaves += veinedLeaf(px, py, angle + 0.9, size) + veinedLeaf(px, py, angle - 0.9, size * 0.92)
+    if (i % 2 === 0) berries += circle(px + Math.cos(angle + 0.4) * size * 0.35, py + Math.sin(angle + 0.4) * size * 0.35, len * 0.018)
   }
-  leaves += leaf(end[0], end[1], angle, len * 0.2)
-  return out + fill(leaves)
+  leaves += veinedLeaf(end[0], end[1], angle, len * 0.22)
+  return out + leaves + (berries ? fill(berries) : '')
+}
+
+// Small spiral curl, used for corner flourishes.
+function curl(x, y, r, dir) {
+  return `M${f(x)} ${f(y)}C${f(x + dir * r * 1.6)} ${f(y)} ${f(x + dir * r * 1.6)} ${f(y + r * 1.4)} ${f(x + dir * r * 0.8)} ${f(y + r * 1.4)}` +
+    `C${f(x + dir * r * 0.2)} ${f(y + r * 1.4)} ${f(x + dir * r * 0.2)} ${f(y + r * 0.7)} ${f(x + dir * r * 0.7)} ${f(y + r * 0.75)}`
+}
+
+function cornerFlourishes(x, y, w, h, r) {
+  let d = ''
+  ;[[x, y, 1, 1], [x + w, y, -1, 1], [x, y + h, 1, -1], [x + w, y + h, -1, -1]].forEach(([cx, cy, sx, sy]) => {
+    d += `M${f(cx + sx * r * 0.3)} ${f(cy + sy * r * 2.6)}Q${f(cx + sx * r * 0.3)} ${f(cy + sy * r * 0.3)} ${f(cx + sx * r * 2.6)} ${f(cy + sy * r * 0.3)}`
+    const ex = cx + sx * r * 0.9, ey = cy + sy * r * 0.9
+    d += `M${f(ex)} ${f(ey)}L${f(ex + sx * r * 0.9)} ${f(ey + sy * r * 0.9)}`
+  })
+  return d
 }
 
 function mandala(cx, cy, R) {
-  let fills = '', lines = ''
-  fills += circle(cx, cy, R * 0.07)
-  lines += circle(cx, cy, R * 0.14)
+  let fills = '', eo = '', lines = ''
+  const polar = (a, r) => [cx + Math.cos(a) * r, cy + Math.sin(a) * r]
+  // Centre: dot, ring of tiny dots, 8 veined petals.
+  fills += circle(cx, cy, R * 0.06)
+  for (let i = 0; i < 12; i++) { const [x, y] = polar((i / 12) * Math.PI * 2, R * 0.1); fills += circle(x, y, R * 0.012) }
+  lines += circle(cx, cy, R * 0.135)
   for (let i = 0; i < 8; i++) {
     const a = (i / 8) * Math.PI * 2
-    fills += leaf(cx + Math.cos(a) * R * 0.16, cy + Math.sin(a) * R * 0.16, a, R * 0.3, 0.55)
+    const [x, y] = polar(a, R * 0.14)
+    eo += veinedLeaf(x, y, a, R * 0.27, 0.55)
   }
-  lines += circle(cx, cy, R * 0.52)
+  // Ring 2: 16 outlined petals, each with a dot, alternating small teardrops.
+  lines += circle(cx, cy, R * 0.44)
   for (let i = 0; i < 16; i++) {
     const a = (i / 16) * Math.PI * 2 + Math.PI / 16
-    const x = cx + Math.cos(a) * R * 0.53, y = cy + Math.sin(a) * R * 0.53
-    lines += leaf(x, y, a, R * 0.3, 0.6)
-    fills += circle(cx + Math.cos(a) * R * 0.66, cy + Math.sin(a) * R * 0.66, R * 0.025)
+    const [x, y] = polar(a, R * 0.45)
+    lines += leaf(x, y, a, R * 0.26, 0.62)
+    const [dx, dy] = polar(a, R * 0.58)
+    fills += circle(dx, dy, R * 0.016)
+    const b = (i / 16) * Math.PI * 2
+    const [tx, ty] = polar(b, R * 0.45)
+    fills += leaf(tx, ty, b, R * 0.11, 0.6)
   }
-  lines += circle(cx, cy, R * 0.86)
-  for (let i = 0; i < 32; i++) {
-    const a = (i / 32) * Math.PI * 2
-    fills += circle(cx + Math.cos(a) * R * 0.93, cy + Math.sin(a) * R * 0.93, R * 0.03)
+  // Ring 3: scalloped band with dots in each scallop.
+  lines += circle(cx, cy, R * 0.74)
+  let scallop = ''
+  const n = 24
+  for (let i = 0; i < n; i++) {
+    const a0 = (i / n) * Math.PI * 2, a1 = ((i + 1) / n) * Math.PI * 2, am = (a0 + a1) / 2
+    const [x0, y0] = polar(a0, R * 0.74), [x1, y1] = polar(a1, R * 0.74), [xm, ym] = polar(am, R * 0.9)
+    scallop += `${i ? 'Q' : `M${f(x0)} ${f(y0)}Q`}${f(xm)} ${f(ym)} ${f(x1)} ${f(y1)}`
+    const [dx, dy] = polar(am, R * 0.8)
+    fills += circle(dx, dy, R * 0.02)
   }
-  return fill(fills) + line(lines)
+  lines += scallop
+  // Outer dotted ring.
+  for (let i = 0; i < 48; i++) { const [x, y] = polar((i / 48) * Math.PI * 2, R * 0.96); fills += circle(x, y, R * (i % 2 ? 0.012 : 0.02)) }
+  return fill(fills) + eo + line(lines)
 }
 
 function decoBand(x, y, w, h, band) {
@@ -143,14 +193,18 @@ export function lidDecoration(area, opts) {
   switch (opts.design) {
     case 'title': {
       out += line(roundRect(x, y, w, h, m * 0.06) + roundRect(x + m * 0.035, y + m * 0.035, w - m * 0.07, h - m * 0.07, m * 0.045))
-      out += sprig(cx - w * 0.12, y + h * 0.2, w * 0.24, 0, -m * 0.03, 4)
-      out += titleBlock(cx, cy + h * 0.06, w * 0.78, h * 0.5)
+      out += line(cornerFlourishes(x + m * 0.06, y + m * 0.06, w - m * 0.12, h - m * 0.12, m * 0.05))
+      out += sprig(cx - w * 0.14, y + h * 0.2, w * 0.28, 0, -m * 0.03, 4)
+      out += titleBlock(cx, cy + h * 0.04, w * 0.74, h * 0.46)
+      out += line(`M${f(cx - w * 0.22)} ${f(y + h * 0.8)}Q${f(cx)} ${f(y + h * 0.86)} ${f(cx + w * 0.22)} ${f(y + h * 0.8)}`) +
+        fill(circle(cx, y + h * 0.83, m * 0.012) + circle(cx - w * 0.22, y + h * 0.8, m * 0.01) + circle(cx + w * 0.22, y + h * 0.8, m * 0.01))
       break
     }
     case 'leaves': {
       out += sprig(x + w * 0.04, y + h * 0.96, m * 0.62, -Math.PI / 3.2, m * 0.08, 7)
       out += sprig(x + w * 0.96, y + h * 0.04, m * 0.5, Math.PI - Math.PI / 3.6, m * 0.06, 5)
       out += sprig(x + w * 0.1, y + h * 0.06, m * 0.32, Math.PI / 5, -m * 0.04, 3)
+      out += sprig(x + w * 0.9, y + h * 0.94, m * 0.3, -Math.PI + Math.PI / 5, -m * 0.04, 3)
       out += titleBlock(cx, cy, w * 0.62, h * 0.46)
       break
     }
@@ -165,8 +219,22 @@ export function lidDecoration(area, opts) {
       const band = Math.max(5, m * 0.09)
       out += decoBand(x, y, w, h, band)
       const inner = { w: w - 2 * band - m * 0.1, h: h - 2 * band - m * 0.1 }
-      out += line(roundRect(cx - inner.w * 0.4, cy - inner.h * 0.32, inner.w * 0.8, inner.h * 0.64, 2))
-      out += titleBlock(cx, cy, inner.w * 0.72, inner.h * 0.58)
+      // Sunburst fans in the four inner corners.
+      let rays = ''
+      const fanR = Math.min(inner.w, inner.h) * 0.26
+      ;[[x + band, y + band, 0], [x + w - band, y + band, Math.PI / 2], [x + w - band, y + h - band, Math.PI], [x + band, y + h - band, Math.PI * 1.5]].forEach(([fx, fy, a0]) => {
+        for (let i = 0; i <= 6; i++) {
+          const a = a0 + (i / 6) * (Math.PI / 2)
+          rays += `M${f(fx + Math.cos(a) * fanR * 0.25)} ${f(fy + Math.sin(a) * fanR * 0.25)}L${f(fx + Math.cos(a) * fanR)} ${f(fy + Math.sin(a) * fanR)}`
+        }
+        rays += `M${f(fx + Math.cos(a0) * fanR)} ${f(fy + Math.sin(a0) * fanR)}A${f(fanR)} ${f(fanR)} 0 0 1 ${f(fx + Math.cos(a0 + Math.PI / 2) * fanR)} ${f(fy + Math.sin(a0 + Math.PI / 2) * fanR)}`
+      })
+      out += line(rays)
+      // Plaque with stepped corners, doubled.
+      const pw = inner.w * 0.62, ph = inner.h * 0.6, st = Math.min(pw, ph) * 0.08
+      const stepped = (px, py, qw, qh, k) => `M${f(px + k)} ${f(py)}H${f(px + qw - k)}V${f(py + k)}H${f(px + qw)}V${f(py + qh - k)}H${f(px + qw - k)}V${f(py + qh)}H${f(px + k)}V${f(py + qh - k)}H${f(px)}V${f(py + k)}H${f(px + k)}Z`
+      out += line(stepped(cx - pw / 2, cy - ph / 2, pw, ph, st) + stepped(cx - pw / 2 + 2, cy - ph / 2 + 2, pw - 4, ph - 4, st))
+      out += titleBlock(cx, cy, pw * 0.82, ph * 0.72)
       break
     }
     case 'labels': {

@@ -16,8 +16,8 @@ const CLICK_TOLERANCE_PX = 5
 const GRAIN_TILE_MM = 140
 const GRAIN_PX = 1024
 const CAMERA_TWEEN_MS = 520
-const ENGRAVE_PX_PER_MM = 6
-const ENGRAVE_MAX_PX = 2048
+const ENGRAVE_PX_PER_MM = 14
+const ENGRAVE_MAX_PX = 4096
 const HIGHLIGHT_COLOR = 0xffb020
 
 const VIEW_DIRECTIONS = {
@@ -509,7 +509,7 @@ export function createBoxViewer(container) {
       }
       texture = new THREE.CanvasTexture(canvas)
       texture.colorSpace = THREE.SRGBColorSpace
-      texture.anisotropy = 8
+      texture.anisotropy = renderer.capabilities.getMaxAnisotropy()
       texture.repeat.set(1 / w, 1 / h)
       texture.offset.set(-x0 / w, -y0 / h)
       engraveCache.set(key, texture)
