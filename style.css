@@ -1691,3 +1691,35 @@ input[type="range"]::-webkit-slider-thumb {
 
 .kerf-result strong { color: var(--accent); font-size: 16px; }
 .kerf-result span { color: var(--accent2); }
+
+/* Bookmark image list */
+.bm-files { display: flex; flex-wrap: wrap; gap: 6px; margin: -4px 0 10px; }
+.bm-files:empty { display: none; }
+
+.bm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  font-family: var(--fm);
+  font-size: 10px;
+  color: var(--text2);
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 999px;
+  padding: 4px 6px 4px 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bm-chip button {
+  border: 0;
+  background: transparent;
+  color: var(--text3);
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.bm-chip button:hover { color: var(--red); }
+[data-role="demo"] { margin-bottom: 14px; }

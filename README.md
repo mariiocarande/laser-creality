@@ -40,9 +40,10 @@ La app se organiza en pestañas. El selector de **equipo láser** es global: al 
 - Ancho final en mm y exportación SVG a tamaño real; todo se procesa en el navegador
 
 ### 🧰 Generadores
-Galería ordenada **por festividad** (Navidad, Pascua, Halloween, San Valentín, Día de la Madre y del Padre, Cumpleaños), más regalos, herramientas de imagen y calibración. La próxima festividad aparece primero con una cuenta regresiva.
+Galería ordenada **por festividad** (Navidad, Pascua, Halloween, San Valentín, Día de la Madre y del Padre, Cumpleaños), más señaladores ilustrados, regalos, herramientas de imagen y calibración. La próxima festividad aparece primero con una cuenta regresiva.
 - **Etiquetas y adornos por festividad**: 22 dibujos (esfera, estrella, arbolito, bota, campana, galletita, huevo, conejo, pollito, flor, calabaza, fantasma, murciélago, gato, corazones, camisa, taza, globo, torta…) con el nombre grabado o calado y detalles grabados; una pieza por nombre
 - **Faroles calados** de Navidad, Pascua, Halloween y San Valentín: caja de luz con dibujos calados en las cuatro caras, texto en el frente y vista 3D iluminada desde adentro
+- **Señaladores y colgantes ilustrados** (sección *Señaladores y fan art*): subís tus ilustraciones —una por señalador— o una **lámina con varios personajes** que la app divide en columnas y filas (con recorte de borde para sacar marcos o agujeros de la lámina original). Forma con oreja, arco o rectangular, medidas libres, **diámetro del agujero y borde ajustables** (o sin agujero), marco grabado doble, imagen procesada para grabar (tramado, escala de grises o blanco y negro con brillo, contraste, umbral, encuadre vertical y DPI), texto opcional abajo y copias. No trae personajes con derechos incluidos: usá imágenes propias o con permiso
 - **Prueba de kerf y encastre**: cuadrado y peine de ranuras para medir el kerf; el resultado se pasa directo a Cajas
 - **Esferas con nombre**: esfera, disco o estrella con el nombre **grabado** o **calado** (con puentes automáticos en la O, A, B…), segunda línea opcional, decoración grabada (aro o copos) y una pieza por cada nombre de la lista
 - **Árbol familiar**: los nombres arman los pisos de un arbolito (el más corto arriba), con estrella para colgar y el año en el tronco; nombres grabados o calados, todo en una sola pieza

@@ -11,6 +11,7 @@ import { frameTool } from './frameTool.js'
 import { kerfTool } from './kerfTool.js'
 import { themedTagTool } from './themedTagTool.js'
 import { lanternTool } from './lanternTool.js'
+import { bookmarkTool } from './bookmarkTool.js'
 import { HOLIDAYS } from '../../holidays.js'
 
 // Every generator: { id, icon, title, description, categories, thumb?, mount(root, { onBack }) }.
@@ -21,11 +22,12 @@ const GENERATORS = [
   themedTagTool('sanvalentin'), lanternTool('sanvalentin'),
   themedTagTool('madrepadre'), crosswordTool, frameTool, keychainTool,
   themedTagTool('cumple'), drinkMarkerTool,
-  qrTagTool, halftoneTool, depthMapTool, puzzleTool, kerfTool,
+  bookmarkTool, qrTagTool, halftoneTool, depthMapTool, puzzleTool, kerfTool,
 ]
 
 const SECTIONS = [
   ...HOLIDAYS,
+  { id: 'personajes', icon: '🎴', label: 'Señaladores y fan art', blurb: 'Tus personajes e ilustraciones favoritas en señaladores y colgantes, con marco y agujero a medida.' },
   { id: 'regalos', icon: '🎁', label: 'Regalos todo el año', blurb: 'Llaveros, etiquetas con QR, marcos y crucigramas.' },
   { id: 'imagen', icon: '🖼', label: 'Herramientas de imagen', blurb: 'Halftone, mapas de profundidad y rompecabezas con tu foto.' },
   { id: 'herramientas', icon: '🛠', label: 'Calibración', blurb: 'Pruebas para ajustar tu láser.' },
