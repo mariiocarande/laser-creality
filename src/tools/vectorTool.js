@@ -1,6 +1,7 @@
 import { state, onMachineChange } from '../state.js'
 import { MACHINES } from '../machines.js'
 import { vectorize, loopToPath } from '../vectorize.js'
+import { attachDxf } from '../dxfButton.js'
 import { layoutPiece } from '../pieceOutline.js'
 import { buildSheetSvg, renderSheetPreviews, downloadSvgs } from '../sheets.js'
 
@@ -149,7 +150,7 @@ function update() {
   const docH = Number((piece.h + 2 * DOC_PADDING).toFixed(3))
 
   exportSvg = buildSheetSvg([placement], docW, docH)
-  renderSheetPreviews(el('vec-preview'), [buildSheetSvg([placement], docW, docH, { preview: true, previewStroke: Math.max(0.12, docW / 350) })])
+  renderSheetPreviews(el('vec-preview'), [buildSheetSvg([placement], docW, docH, { preview: true })])
   el('vec-empty').style.display = 'none'
 
   const traceLength = wantsCut ? loops.reduce((sum, loop) => sum + loopLength(loop.points), 0) * scale : 0
@@ -296,6 +297,7 @@ export function initVectorTool() {
   el('vec-dl-btn').addEventListener('click', () => {
     if (exportSvg) downloadSvgs([exportSvg], 'vectorizado')
   })
+  attachDxf(el('vec-dl-btn'), () => [exportSvg], 'vectorizado', showMessage)
 
   onMachineChange(update)
   syncSourceUi()

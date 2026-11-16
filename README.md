@@ -12,16 +12,25 @@ La app se organiza en pestañas. El selector de **equipo láser** es global: al 
 - Vista previa original vs. procesada y descarga en PNG o SVG
 
 ### 📦 Cajas
+- **Cajas de té** con diseños grabados en la tapa (título, botánico, mandala, art déco, etiquetas por compartimento) o con **ventana de acrílico** que encaja al ras en el tope de la tapa, y texto grabado en el frente
+- **Orientación horizontal o vertical**: la vertical es un dispensador alto con una ranura abajo de cada columna para sacar los saquitos
+- **Para colgar en la pared**: dos ojales tipo bocallave en la pieza de atrás (cualquier tipo de caja)
 - Tres tipos: **caja**, **cajón deslizante** (mueble abierto adelante + cajón con agujero para tirar y holgura ajustable) y **maceta** (caja abierta con patas, piso con pestañas que entran en ranuras de las paredes y agujeros de drenaje opcionales)
 - Caja rectangular con **finger joints** (dientes), medidas exteriores o interiores
 - Grosor de material, ancho de diente y **compensación de kerf** configurables
-- **Presets**: 16 configuraciones listas (mazo de cartas, joyero, caja de té, organizador, regalo, cajonera, maceta de suculentas, jardinera, etc.) que cargan medidas, tapa y divisores de una; además podés **guardar tus propias configuraciones** en el navegador
+- **Presets**: 25 configuraciones listas agrupadas en cajas de té, regalos, organización y cajones/macetas, con sus diseños que cargan medidas, tapa y divisores de una; además podés **guardar tus propias configuraciones** en el navegador
 - **Divisores internos**: columnas y filas (hasta 8 × 8) que se encastran en cruz y quedan sueltos dentro de la caja
 - Cinco tapas: **abierta**, **encastrada** (caja cerrada), **suelta** (tapa lisa con tope interior), **corrediza** (corre entre guías pegadas a los laterales) y **con bisagra** (orejas de la tapa que giran en agujeros de los laterales)
 - **Vista 3D interactiva** (three.js) de la caja armada: girar, zoom y mover; vistas de perspectiva, frente, planta y lateral; separar las piezas, abrir la tapa con animación, giro automático, cotas, grilla, ocultar piezas con un click y exportar la vista a PNG. El material elegido cambia el aspecto (veta de madera, acrílico translúcido)
 - Las piezas se acomodan solas en el área de la máquina; si no entran en una plancha se reparten en varias
 - Parámetros de corte según material y equipo, largo de corte y tiempo estimado
 - Exporta **SVG en milímetros reales** (trazo rojo = corte)
+
+### Visores y exportación
+- **Plano 2D interactivo** en todas las herramientas: zoom con rueda o pellizco, arrastrar para mover, reglas en mm, coordenadas del cursor, nombre y medida de cada pieza al pasar el mouse, capas de corte/grabado/nombres y una solapa por plancha
+- **Vista 3D** con iluminación de estudio, veta de madera, grabados aplicados sobre las piezas, resaltado al pasar el mouse, transiciones de cámara y pantalla completa
+- **Exportación DXF** (capas CORTE y GRABADO, en mm) además de SVG en todas las herramientas
+- Acomodo de piezas que aprovecha mejor cada plancha
 
 ### 〰 Vectorizar
 - Convierte un logo, silueta o dibujo (PNG, JPG, WEBP, SVG; también pegando con Ctrl+V) en **trazos cerrados reales**, con huecos incluidos
@@ -31,7 +40,10 @@ La app se organiza en pestañas. El selector de **equipo láser** es global: al 
 - Ancho final en mm y exportación SVG a tamaño real; todo se procesa en el navegador
 
 ### 🧰 Generadores
-Galería de herramientas extra, cada una en su propia ficha:
+Galería ordenada **por festividad** (Navidad, Pascua, Halloween, San Valentín, Día de la Madre y del Padre, Cumpleaños), más regalos, herramientas de imagen y calibración. La próxima festividad aparece primero con una cuenta regresiva.
+- **Etiquetas y adornos por festividad**: 22 dibujos (esfera, estrella, arbolito, bota, campana, galletita, huevo, conejo, pollito, flor, calabaza, fantasma, murciélago, gato, corazones, camisa, taza, globo, torta…) con el nombre grabado o calado y detalles grabados; una pieza por nombre
+- **Faroles calados** de Navidad, Pascua, Halloween y San Valentín: caja de luz con dibujos calados en las cuatro caras, texto en el frente y vista 3D iluminada desde adentro
+- **Prueba de kerf y encastre**: cuadrado y peine de ranuras para medir el kerf; el resultado se pasa directo a Cajas
 - **Esferas con nombre**: esfera, disco o estrella con el nombre **grabado** o **calado** (con puentes automáticos en la O, A, B…), segunda línea opcional, decoración grabada (aro o copos) y una pieza por cada nombre de la lista
 - **Árbol familiar**: los nombres arman los pisos de un arbolito (el más corto arriba), con estrella para colgar y el año en el tronco; nombres grabados o calados, todo en una sola pieza
 - **Crucigrama familiar**: acomoda solos los nombres cruzándolos en letras compartidas, fichas con puntaje, en una sola pieza o en fichas sueltas con base marcada para pegar
@@ -118,6 +130,10 @@ laser-prep-falcon5w/
 │   ├── imageProcessing.js  # Floyd-Steinberg, Sobel, trazado de contornos, RDP
 │   ├── vectorize.js        # Imagen → contornos cerrados (trazado, simplificación, Bézier)
 │   ├── pieceOutline.js     # Contorno de corte y agujero, compartido por Vectorizar y Personalizar
+│   ├── sheetViewer.js      # Visor 2D interactivo (zoom, reglas, capas)
+│   ├── dxf.js              # Exportación SVG → DXF
+│   ├── decor.js            # Diseños grabados para tapas y frentes
+│   ├── holidays.js         # Festividades y biblioteca de dibujos
 │   ├── textPaths.js        # Tipografías y texto → trazos (compartido)
 │   ├── weld.js             # Une formas dibujadas y calcula calados con puentes
 │   ├── qr.js               # Código QR → trazado vectorial

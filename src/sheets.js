@@ -1,3 +1,5 @@
+import { renderSheetViewer } from './sheetViewer.js'
+
 // Sheet layout, SVG building and download helpers shared by the generators.
 // Units are millimetres; sheets match the selected machine's work area.
 
@@ -6,7 +8,7 @@ export const PART_GAP = 3
 
 const CUT_COLOR = '#ff0000'
 const EXPORT_STROKE = 0.1
-const PREVIEW_STROKE = 0.6
+const PREVIEW_STROKE_PX = 1.4
 
 const fmt = n => Number(n.toFixed(3)).toString()
 
@@ -19,52 +21,88 @@ export function rotatePoints(points, h) {
 }
 
 export function rotateHoles(holes, h) {
-  return holes.map(hole => (hole.rect
-    ? { rect: true, x: h - hole.y - hole.h, y: hole.x, w: hole.h, h: hole.w }
-    : { cx: h - hole.cy, cy: hole.cx, r: hole.r }))
+  return holes.map(hole => {
+    if (hole.poly) return { poly: hole.poly.map(([x, y]) => [h - y, x]) }
+    return hole.rect
+      ? { rect: true, x: h - hole.y - hole.h, y: hole.x, w: hole.h, h: hole.w }
+      : { cx: h - hole.cy, cy: hole.cx, r: hole.r }
+  })
 }
 
 export function holesToMarkup(holes) {
-  return holes.map(h => (h.rect
-    ? `<rect x="${fmt(h.x)}" y="${fmt(h.y)}" width="${fmt(h.w)}" height="${fmt(h.h)}"/>`
-    : `<circle cx="${fmt(h.cx)}" cy="${fmt(h.cy)}" r="${fmt(h.r)}"/>`)).join('')
+  return holes.map(h => {
+    if (h.poly) return `<path d="${pointsToPath(h.poly)}"/>`
+    return h.rect
+      ? `<rect x="${fmt(h.x)}" y="${fmt(h.y)}" width="${fmt(h.w)}" height="${fmt(h.h)}"/>`
+      : `<circle cx="${fmt(h.cx)}" cy="${fmt(h.cy)}" r="${fmt(h.r)}"/>`
+  }).join('')
 }
 
-// Shelf packing. items: [{ w, h, ... }]
-// Returns { sheets: [[{ item, x, y, rotated }]], oversize: [item] }
+// Shelf packing with first fit across every open shelf and sheet.
+// items: [{ w, h, ... }]
+// Returns { sheets: [[{ item, x, y, w, h, rotated }]], oversize: [item] }
 export function packSheets(items, sheetW, sheetH, { allowRotate = true } = {}) {
   const usableW = sheetW - 2 * SHEET_MARGIN
   const usableH = sheetH - 2 * SHEET_MARGIN
   const oversize = []
+  const sheets = []   // { shelves: [{ y, h, x }], used: number, placed: [] }
 
-  const oriented = []
-  items.forEach(item => {
-    const fits      = item.w <= usableW && item.h <= usableH
-    const fitsTurned = allowRotate && item.h <= usableW && item.w <= usableH
-    if (!fits && !fitsTurned) { oversize.push(item); return }
-    // Prefer the landscape orientation so shelves stay short.
-    const rotated = fitsTurned && (!fits || item.h > item.w)
-    oriented.push({ item, rotated, w: rotated ? item.h : item.w, h: rotated ? item.w : item.h })
+  const orientations = item => {
+    const list = [{ w: item.w, h: item.h, rotated: false }]
+    if (allowRotate && Math.abs(item.w - item.h) > 1e-6) list.push({ w: item.h, h: item.w, rotated: true })
+    return list.filter(o => o.w <= usableW && o.h <= usableH)
+  }
+
+  const order = items.slice().sort((a, b) => Math.max(b.w, b.h) - Math.max(a.w, a.h) || b.w * b.h - a.w * a.h)
+
+  order.forEach(item => {
+    const options = orientations(item)
+    if (!options.length) { oversize.push(item); return }
+
+    // 1. An existing shelf with room, least wasted height first.
+    let best = null
+    sheets.forEach((sheet, si) => sheet.shelves.forEach(shelf => options.forEach(o => {
+      if (shelf.x + o.w > usableW || o.h > shelf.h) return
+      const waste = shelf.h - o.h
+      if (!best || waste < best.waste - 1e-6 || (Math.abs(waste - best.waste) < 1e-6 && si < best.si)) {
+        best = { sheet, shelf, o, waste, si }
+      }
+    })))
+    if (best) {
+      place(best.sheet, best.shelf, best.o, item)
+      return
+    }
+
+    // 2. A new shelf on an existing sheet: the flattest orientation that fits.
+    const flat = options.slice().sort((a, b) => a.h - b.h)
+    for (const sheet of sheets) {
+      const y = sheet.used ? sheet.used + PART_GAP : 0
+      const o = flat.find(c => y + c.h <= usableH)
+      if (o) {
+        const shelf = { y, h: o.h, x: 0 }
+        sheet.shelves.push(shelf)
+        sheet.used = y + o.h
+        place(sheet, shelf, o, item)
+        return
+      }
+    }
+
+    // 3. A new sheet.
+    const sheet = { shelves: [], used: 0, placed: [] }
+    sheets.push(sheet)
+    const o = flat[0]
+    const shelf = { y: 0, h: o.h, x: 0 }
+    sheet.shelves.push(shelf)
+    sheet.used = o.h
+    place(sheet, shelf, o, item)
   })
 
-  oriented.sort((a, b) => b.h - a.h)
+  function place(sheet, shelf, o, item) {
+    sheet.placed.push({ item, rotated: o.rotated, w: o.w, h: o.h, x: shelf.x + SHEET_MARGIN, y: shelf.y + SHEET_MARGIN })
+    shelf.x += o.w + PART_GAP
+  }
 
-  const sheets = []
-  let sheet = null
-  let x = 0, y = 0, shelfH = 0
-
-  const newSheet = () => { sheet = []; sheets.push(sheet); x = 0; y = 0; shelfH = 0 }
-
-  oriented.forEach(o => {
-    if (!sheet) newSheet()
-    if (x > 0 && x + o.w > usableW) { x = 0; y += shelfH + PART_GAP; shelfH = 0 }
-    if (y + o.h > usableH) newSheet()
-    sheet.push({ item: o.item, rotated: o.rotated, w: o.w, h: o.h, x: x + SHEET_MARGIN, y: y + SHEET_MARGIN })
-    x += o.w + PART_GAP
-    shelfH = Math.max(shelfH, o.h)
-  })
-
-  return { sheets, oversize }
+  return { sheets: sheets.map(s => s.placed), oversize }
 }
 
 const escapeXml = s => String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]))
@@ -72,17 +110,18 @@ const escapeXml = s => String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&
 // placements: [{ x, y, w, h, cut, engrave, label }]
 //   cut     → SVG markup drawn with the cut stroke (red hairline)
 //   engrave → SVG markup that carries its own fill
-export function buildSheetSvg(placements, sheetW, sheetH, { preview = false, previewStroke = PREVIEW_STROKE } = {}) {
-  const stroke = preview ? previewStroke : EXPORT_STROKE
+export function buildSheetSvg(placements, sheetW, sheetH, { preview = false } = {}) {
+  // Preview strokes stay a constant width on screen at any zoom (see sheetViewer).
+  const stroke = preview ? PREVIEW_STROKE_PX : EXPORT_STROKE
 
   const body = placements.map(p => {
     const label = preview && p.label
-      ? `<text x="${fmt(p.w / 2)}" y="${fmt(p.h / 2)}" font-family="sans-serif" font-size="${fmt(Math.min(9, p.w / 8, p.h * 0.7))}" fill="#7a5a30" text-anchor="middle" dominant-baseline="middle">${escapeXml(p.label)}</text>`
+      ? `<text class="layer-label" x="${fmt(p.w / 2)}" y="${fmt(p.h / 2)}" font-family="sans-serif" font-size="${fmt(Math.min(9, p.w / 8, p.h * 0.7))}" fill="#7a5a30" fill-opacity="0.85" text-anchor="middle" dominant-baseline="middle">${escapeXml(p.label)}</text>`
       : ''
     return [
       `  <g transform="translate(${fmt(p.x)},${fmt(p.y)})">`,
-      p.engrave ? `    <g>${p.engrave}</g>` : '',
-      p.cut ? `    <g fill="none" stroke="${CUT_COLOR}" stroke-width="${stroke}" stroke-linejoin="round">${p.cut}</g>` : '',
+      p.engrave ? `    <g class="layer-engrave">${p.engrave}</g>` : '',
+      p.cut ? `    <g class="layer-cut" fill="none" stroke="${CUT_COLOR}" stroke-width="${stroke}" stroke-linejoin="round">${p.cut}</g>` : '',
       label,
       '  </g>',
     ].filter(Boolean).join('\n')
@@ -100,30 +139,10 @@ export function buildSheetSvg(placements, sheetW, sheetH, { preview = false, pre
   ].join('\n')
 }
 
-let previewUrls = new WeakMap()
-
-// Renders each sheet as an <img> so uploaded SVG content can never run scripts.
-export function renderSheetPreviews(container, sheetSvgs) {
-  ;(previewUrls.get(container) || []).forEach(url => URL.revokeObjectURL(url))
-  container.innerHTML = ''
-
-  const urls = sheetSvgs.map((svg, i) => {
-    const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }))
-    const figure = document.createElement('figure')
-    figure.className = 'sheet'
-    const img = document.createElement('img')
-    img.src = url
-    img.alt = `Plancha ${i + 1}`
-    figure.appendChild(img)
-    if (sheetSvgs.length > 1) {
-      const caption = document.createElement('figcaption')
-      caption.textContent = `Plancha ${i + 1} de ${sheetSvgs.length}`
-      figure.appendChild(caption)
-    }
-    container.appendChild(figure)
-    return url
-  })
-  previewUrls.set(container, urls)
+// Renders the sheets in the interactive viewer (zoom, rulers, layers).
+// options.pieces: per sheet, [{ x, y, w, h, label }] for names on hover.
+export function renderSheetPreviews(container, sheetSvgs, options) {
+  renderSheetViewer(container, sheetSvgs, options)
 }
 
 export function downloadSvgs(sheetSvgs, baseName) {

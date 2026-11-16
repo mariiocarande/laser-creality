@@ -1,6 +1,7 @@
 import { FONTS, loadFont, textBlock, textMarkup } from '../../textPaths.js'
 import { traceDrawing } from '../../weld.js'
 import { downloadSvgs } from '../../sheets.js'
+import { attachDxf } from '../../dxfButton.js'
 import { controlsHtml, bindControls } from './form.js'
 import { toolLayout, layoutRefs } from './layout.js'
 import { showPieces, fontFieldOptions } from './output.js'
@@ -47,6 +48,7 @@ export const drinkMarkerTool = {
   icon: '🥂',
   title: 'Marcadores de copa',
   description: 'Etiquetas con el nombre de cada invitado que se encajan en el borde de la copa. Para casamientos y fiestas.',
+  categories: ['cumple', 'sanvalentin'],
 
   mount(root, { onBack }) {
     root.innerHTML = toolLayout({
@@ -61,6 +63,7 @@ export const drinkMarkerTool = {
     refs.back.addEventListener('click', onBack)
     bindControls(refs.controls, sections, model, () => { clearTimeout(timer); timer = setTimeout(update, 200) })
     refs.download('svg').addEventListener('click', () => downloadSvgs(exportSvgs, 'marcadores_copa'))
+    attachDxf(refs.download('svg'), () => exportSvgs, 'marcadores_copa', text => refs.setWarn(text))
     update()
   },
 }

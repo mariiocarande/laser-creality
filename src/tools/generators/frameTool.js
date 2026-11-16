@@ -1,5 +1,6 @@
 import { FONTS, loadFont, textBlock, textMarkup } from '../../textPaths.js'
 import { downloadSvgs } from '../../sheets.js'
+import { attachDxf } from '../../dxfButton.js'
 import { controlsHtml, bindControls } from './form.js'
 import { toolLayout, layoutRefs } from './layout.js'
 import { showPieces, SCORE_STROKE, fontFieldOptions } from './output.js'
@@ -73,6 +74,7 @@ export const frameTool = {
   icon: '🖼',
   title: 'Portarretratos',
   description: 'Marco para cualquier tamaño de foto, clásico o tipo Polaroid, con texto grabado, tapa trasera y pie.',
+  categories: ['madrepadre', 'sanvalentin', 'regalos'],
 
   mount(root, { onBack }) {
     root.innerHTML = toolLayout({
@@ -94,6 +96,7 @@ export const frameTool = {
       timer = setTimeout(update, 150)
     })
     refs.download('svg').addEventListener('click', () => downloadSvgs(exportSvgs, 'portarretratos'))
+    attachDxf(refs.download('svg'), () => exportSvgs, 'portarretratos', text => refs.setWarn(text))
     update()
   },
 }

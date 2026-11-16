@@ -1,6 +1,7 @@
 import { FONTS, loadFont, textBlock, textMarkup, blockMatrix } from '../../textPaths.js'
 import { traceDrawing } from '../../weld.js'
 import { downloadSvgs } from '../../sheets.js'
+import { attachDxf } from '../../dxfButton.js'
 import { controlsHtml, bindControls } from './form.js'
 import { toolLayout, layoutRefs } from './layout.js'
 import { showPieces, SCORE_STROKE, fontFieldOptions } from './output.js'
@@ -55,6 +56,7 @@ export const ornamentTool = {
   icon: '🎄',
   title: 'Esferas con nombre',
   description: 'Esferas, discos o estrellas para el árbol con el nombre grabado o calado. Una por cada nombre.',
+  categories: ['navidad'],
 
   mount(root, { onBack }) {
     root.innerHTML = toolLayout({
@@ -69,6 +71,7 @@ export const ornamentTool = {
     refs.back.addEventListener('click', onBack)
     bindControls(refs.controls, sections, model, () => { clearTimeout(timer); timer = setTimeout(update, 200) })
     refs.download('svg').addEventListener('click', () => downloadSvgs(exportSvgs, 'esferas_navidad'))
+    attachDxf(refs.download('svg'), () => exportSvgs, 'esferas_navidad', text => refs.setWarn(text))
     update()
   },
 }

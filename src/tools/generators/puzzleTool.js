@@ -4,6 +4,7 @@ import { buildSheetSvg, renderSheetPreviews, downloadSvgs } from '../../sheets.j
 import { state } from '../../state.js'
 import { MACHINES, applyMachine } from '../../machines.js'
 import { DB } from '../../db.js'
+import { attachDxf } from '../../dxfButton.js'
 import { controlsHtml, bindControls } from './form.js'
 import { toolLayout, layoutRefs } from './layout.js'
 
@@ -56,6 +57,7 @@ export const puzzleTool = {
   icon: '🧩',
   title: 'Rompecabezas',
   description: 'Foto opcional + piezas con encastre clásico. SVG con líneas de corte continuas.',
+  categories: ['imagen', 'regalos'],
 
   mount(root, { onBack }) {
     root.innerHTML = toolLayout({
@@ -84,6 +86,7 @@ export const puzzleTool = {
     })
     refs.download('svg').addEventListener('click', () =>
       exportSvg && downloadSvgs([exportSvg], `rompecabezas_${model.cols * model.rows}piezas`))
+    attachDxf(refs.download('svg'), () => [exportSvg], () => `rompecabezas_${model.cols * model.rows}piezas`, text => refs.setWarn(text))
     update()
   },
 }
@@ -136,7 +139,7 @@ function update() {
     cut: result.lines.map(d => `<path d="${d}"/>`).join('') + result.border,
   }
   exportSvg = buildSheetSvg([placement], W, H)
-  renderSheetPreviews(refs.preview, [buildSheetSvg([placement], W, H, { preview: true, previewStroke: Math.max(0.3, W / 300) })])
+  renderSheetPreviews(refs.preview, [buildSheetSvg([placement], W, H, { preview: true })])
   refs.setEmpty('')
 
   const machine = MACHINES[state.machine]

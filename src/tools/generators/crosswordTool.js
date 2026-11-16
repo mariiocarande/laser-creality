@@ -1,6 +1,7 @@
 import { FONTS, loadFont, textBlock, textMarkup } from '../../textPaths.js'
 import { buildCrossword, LETTER_POINTS } from '../../crossword.js'
 import { downloadSvgs } from '../../sheets.js'
+import { attachDxf } from '../../dxfButton.js'
 import { controlsHtml, bindControls } from './form.js'
 import { toolLayout, layoutRefs } from './layout.js'
 import { showPieces, SCORE_STROKE, fontFieldOptions } from './output.js'
@@ -54,6 +55,7 @@ export const crosswordTool = {
   icon: '🔤',
   title: 'Crucigrama familiar',
   description: 'Los nombres de la familia cruzados como en el juego de palabras, en fichas con puntaje. Para un cartel de pared.',
+  categories: ['madrepadre', 'regalos'],
 
   mount(root, { onBack }) {
     root.innerHTML = toolLayout({
@@ -69,6 +71,7 @@ export const crosswordTool = {
     bindControls(refs.controls, sections, model, () => { clearTimeout(timer); timer = setTimeout(update, 150) })
     root.querySelector('[data-role="shuffle"]').addEventListener('click', () => { model.seed += 1; update() })
     refs.download('svg').addEventListener('click', () => downloadSvgs(exportSvgs, 'crucigrama_familiar'))
+    attachDxf(refs.download('svg'), () => exportSvgs, 'crucigrama_familiar', text => refs.setWarn(text))
     update()
   },
 }

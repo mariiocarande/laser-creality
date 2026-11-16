@@ -86,7 +86,7 @@ function traceMask(mask, w, h, ppm, minArea, smooth) {
     .map(points => simplifyLoop(chamferLoop(points), SIMPLIFY_PX))
     .filter(points => points.length >= 3)
     .map(points => points.map(([x, y]) => [x / ppm, y / ppm]))
-  return { d: loops.map(points => loopToPath(points, smooth)).join(''), count: loops.length }
+  return { d: loops.map(points => loopToPath(points, smooth)).join(''), count: loops.length, loops }
 }
 
 // options: {
@@ -134,7 +134,7 @@ export function traceDrawing(options) {
   const minArea = (options.minAreaMm2 ?? 0.05) * ppm * ppm
   const smooth = options.smooth !== false
 
-  let cutouts = { d: '', count: 0 }
+  let cutouts = { d: '', count: 0, loops: [] }
   if (options.drawCutouts) {
     const removed = new Uint8Array(w * h)
     for (let i = 0; i < removed.length; i++) removed[i] = solid[i] && !mask[i] ? 1 : 0
@@ -146,6 +146,7 @@ export function traceDrawing(options) {
     d: outline.d + cutouts.d,
     outline: outline.d,
     cutouts: cutouts.d,
+    cutoutLoops: cutouts.loops,   // simplified polygons in mm, e.g. for the 3D preview
     loops: outline.count + cutouts.count,
     bridges,
     pxPerMm: ppm,

@@ -50,6 +50,7 @@ export const depthMapTool = {
   icon: '⛰',
   title: 'Mapa de profundidad',
   description: 'Foto → escala de grises lista para grabado 3D por potencia, con suavizado y niveles.',
+  categories: ['imagen'],
 
   mount(root, { onBack }) {
     root.innerHTML = toolLayout({

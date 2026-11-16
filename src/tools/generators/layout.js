@@ -1,7 +1,7 @@
 // Shared two-column layout for a generator: controls on the left,
 // preview and export on the right. Element ids are scoped with `data-role`.
 
-export function toolLayout({ icon, title, intro, sourceHtml = '', controls, note, downloads }) {
+export function toolLayout({ icon, title, intro, sourceHtml = '', controls, note, downloads, with3d = false }) {
   return `
     <div class="gen-head">
       <button class="mini-btn gen-back" data-role="back">← Generadores</button>
@@ -25,7 +25,17 @@ export function toolLayout({ icon, title, intro, sourceHtml = '', controls, note
       <div class="right-col">
         <div class="panel">
           <div class="panel-hd"><span class="panel-hd-ico">👁</span><span class="panel-hd-txt">Vista previa</span></div>
-          <div class="sheet-area">
+          ${with3d ? `
+          <div class="prev-tabs">
+            <button class="prev-tab on" data-gview="3d">Vista 3D</button>
+            <button class="prev-tab" data-gview="sheet">Plano de corte</button>
+          </div>
+          <div data-role="view3d">
+            <div class="viewer3d" data-role="stage3d">
+              <div class="viewer-bar bottom" data-role="bar3d"></div>
+            </div>
+          </div>` : ''}
+          <div class="sheet-area" data-role="sheetwrap" ${with3d ? 'hidden' : ''}>
             <div class="prev-empty" data-role="empty">
               <span class="prev-empty-ico">${icon}</span>
               <div class="prev-empty-txt" data-role="empty-txt"></div>
@@ -57,6 +67,8 @@ export function layoutRefs(root) {
     info: q('info'),
     warn: q('warn'),
     download: id => root.querySelector(`[data-download="${id}"]`),
+    stage3d: q('stage3d'),
+    bar3d: q('bar3d'),
     setInfo(html) { this.info.innerHTML = html; this.info.style.display = html ? 'block' : 'none' },
     setWarn(text) { this.warn.textContent = text; this.warn.style.display = text ? 'block' : 'none' },
     setEmpty(text) {
@@ -64,6 +76,15 @@ export function layoutRefs(root) {
       this.empty.style.display = text ? 'block' : 'none'
     },
   }
+}
+
+// Switches between the 3D view and the cut sheet in a with3d layout.
+export function bindViewTabs(root) {
+  root.querySelectorAll('[data-gview]').forEach(tab => tab.addEventListener('click', () => {
+    root.querySelectorAll('[data-gview]').forEach(t => t.classList.toggle('on', t === tab))
+    root.querySelector('[data-role="view3d"]').hidden = tab.dataset.gview !== '3d'
+    root.querySelector('[data-role="sheetwrap"]').hidden = tab.dataset.gview !== 'sheet'
+  }))
 }
 
 export function downloadBlob(blob, filename) {

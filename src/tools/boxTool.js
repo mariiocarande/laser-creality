@@ -1,9 +1,12 @@
 import { DB } from '../db.js'
 import { state, onMachineChange } from '../state.js'
 import { MACHINES, applyMachine } from '../machines.js'
+import { attachDxf } from '../dxfButton.js'
 import { buildBox } from '../boxGeometry.js'
+import { DESIGNS, lidDecoration, frontDecoration } from '../decor.js'
+import { FONTS, loadFont } from '../textPaths.js'
 import {
-  BOX_PRESETS, PRESET_FIELDS, describePreset, loadSavedPresets, storeSavedPresets,
+  BOX_PRESETS, PRESET_GROUPS, PRESET_FIELDS, describePreset, loadSavedPresets, storeSavedPresets,
 } from '../boxPresets.js'
 import {
   packSheets, pointsToPath, rotatePoints, rotateHoles, holesToMarkup,
@@ -11,6 +14,10 @@ import {
 } from '../sheets.js'
 
 const THIN_STOCK_MAX = 4.5
+
+export function defaultDecor() {
+  return { design: 'none', title: '', subtitle: '', labels: '', front: '', font: 'pacifico' }
+}
 
 const box = {
   width: 100,
@@ -20,6 +27,8 @@ const box = {
   fingerWidth: 10,
   kerf: 0.15,
   kind: 'box',        // 'box' | 'drawer' | 'planter'
+  orientation: 'horizontal',
+  wallMount: false,
   lid: 'open',        // one of LID_TYPES in boxGeometry.js
   clearance: 1,
   footHeight: 15,
@@ -29,12 +38,14 @@ const box = {
   innerDims: false,
   material: 'plywood',
   tone: 'light',
+  decor: defaultDecor(),
 }
 
 let exportSvgs = []
 let viewer = null       // 3D viewer, loaded lazily so three.js stays out of the main bundle
 let lastResult = null
 let lidOpen = false
+let updateToken = 0
 let savedPresets = []
 let activePreset = null   // id of the preset the current box still matches
 
@@ -111,13 +122,97 @@ function formatMinutes(mins) {
   return mins < 1 ? `~${Math.ceil(mins * 60)} seg` : `~${Math.ceil(mins)} min`
 }
 
-function update() {
+// Where the lid lives for each lid type, and what to keep clear on it.
+const LID_PANEL = { closed: 'top', lift: 'lid', slide: 'lid', hinge: 'lid' }
+
+function bbox(points) {
+  const xs = points.map(q => q[0]), ys = points.map(q => q[1])
+  return { w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) }
+}
+
+// Free area on a panel's outside face (outside coords: y down from the top edge).
+function freeArea(panel, inset, avoidHoles) {
+  const { w, h } = bbox(panel.shape)
+  let top = inset, bottom = h - inset
+  if (avoidHoles) {
+    panel.shapeHoles.forEach(hole => {
+      if (hole.poly) return
+      // Outside y runs down from the top edge: y = h − v.
+      const yTop = hole.rect ? h - (hole.y + hole.h) : h - hole.cy - hole.r
+      const yBottom = hole.rect ? h - hole.y : h - hole.cy + hole.r
+      if ((yTop + yBottom) / 2 > h / 2) bottom = Math.min(bottom, yTop - 3)
+      else top = Math.max(top, yBottom + 3)
+    })
+  }
+  return { w, h, area: { x: inset, y: top, w: w - 2 * inset, h: bottom - top } }
+}
+
+// Turns outside-view artwork into what the laser engraves on the bed: the
+// piece is cut as drawn and assembled flipped left-to-right, so the artwork
+// is rotated 180° about the panel centre (and shifted by the kerf offset).
+function attachEngraving(panel, markup, w, h) {
+  if (!markup) return
+  const half = box.kerf / 2
+  panel.engrave3d = markup
+  panel.engraveExport = `<g transform="translate(${half} ${half}) rotate(180 ${(w / 2).toFixed(3)} ${(h / 2).toFixed(3)})">${markup}</g>`
+}
+
+async function decorate(result) {
+  const d = box.decor
+  const wantsLid = box.kind === 'box' && d.design !== 'none' && LID_PANEL[box.lid]
+  const wantsFront = Boolean(d.front.trim())
+  if (!wantsLid && !wantsFront) return
+  const [font, subFont] = await Promise.all([loadFont(d.font), loadFont('dmsans')])
+  const t = box.thickness
+
+  if (wantsLid) {
+    const panel = result.panels.find(p => p.id === LID_PANEL[box.lid])
+    if (panel) {
+      const inset = box.lid === 'closed' ? t + 4 : box.lid === 'lift' ? 6 : t + 3
+      // A window is itself a hole: the design frames it rather than avoiding it.
+      const { w, h, area } = freeArea(panel, inset, !result.window)
+      let windowRect = null
+      if (result.window) {
+        const wr = result.window
+        windowRect = { x: wr.x, y: h - (wr.y + wr.h), w: wr.w, h: wr.h }
+      }
+      const markup = lidDecoration(area, {
+        design: d.design, title: d.title, subtitle: d.subtitle,
+        labels: d.labels.split('\n').map(s => s.trim()).filter(Boolean),
+        cols: result.cells.cols, rows: result.cells.rows,
+        font, subFont, window: windowRect,
+      })
+      attachEngraving(panel, markup, w, h)
+    }
+  }
+
+  if (wantsFront) {
+    const id = box.kind === 'drawer' ? 'drawer-front' : 'front'
+    const panel = result.panels.find(p => p.id === id)
+    if (panel) {
+      const { w, h, area } = freeArea(panel, t + 3, true)
+      attachEngraving(panel, frontDecoration(area, d.front, font), w, h)
+    }
+  }
+}
+
+async function update() {
+  const run = ++updateToken
   const machine = MACHINES[state.machine]
   const params = cutParams()
   showParams(params)
   el('box-params-title').textContent = `Corte — ${machine.brand} ${machine.name}`
 
-  const result = buildBox(box)
+  const useWindow = box.kind === 'box' && box.lid === 'lift' && box.decor.design === 'window'
+  const result = buildBox({ ...box, window: useWindow ? {} : null })
+  if (!result.error) {
+    try {
+      await decorate(result)
+    } catch (err) {
+      console.warn('Decoration skipped', err)
+    }
+    if (run !== updateToken) return
+  }
   lastResult = result.error ? null : result
   syncViewer()
   const preview = el('box-preview')
@@ -138,13 +233,18 @@ function update() {
     const points = p.rotated ? rotatePoints(p.item.points, p.item.h) : p.item.points
     const holes = p.rotated ? rotateHoles(p.item.holes, p.item.h) : p.item.holes
     const cut = `<path d="${pointsToPath(points)}"/>${holesToMarkup(holes)}`
-    return { x: p.x, y: p.y, w: p.w, h: p.h, label: p.item.name, cut }
+    // Rotated pieces turn 90° clockwise, same as rotatePoints().
+    const engrave = p.item.engraveExport && p.rotated
+      ? `<g transform="matrix(0 1 -1 0 ${p.item.h} 0)">${p.item.engraveExport}</g>`
+      : p.item.engraveExport || ''
+    return { x: p.x, y: p.y, w: p.w, h: p.h, label: p.item.name, cut, engrave }
   }))
 
   exportSvgs = sheetPlacements.map(pl => buildSheetSvg(pl, machine.area.w, machine.area.h))
   renderSheetPreviews(
     preview,
     sheetPlacements.map(pl => buildSheetSvg(pl, machine.area.w, machine.area.h, { preview: true })),
+    { pieces: sheetPlacements },
   )
 
   const cutLength = result.panels.reduce((sum, p) => sum + p.cutLength, 0)
@@ -166,6 +266,15 @@ function update() {
   }
   if (!params) {
     messages.push('⚠ Este material no se puede cortar en ese grosor con esta base de parámetros. Probá con uno más fino.')
+  }
+  if (box.decor.design === 'window' && box.kind === 'box' && box.lid === 'lift' && !result.window) {
+    messages.push('⚠ La tapa es muy chica para una ventana.')
+  }
+  if (box.decor.design === 'window' && result.window) {
+    messages.push('La ventana lleva una pieza de acrílico (marcada en el plano) que se pega bajo la tapa, encajada en el tope.')
+  }
+  if (box.wallMount && !result.wallMount) {
+    messages.push('⚠ La pieza de atrás es muy chica para los ojales de colgar.')
   }
   if (box.kerf >= box.fingerWidth / 2) {
     messages.push('⚠ El kerf es demasiado grande para ese ancho de diente.')
@@ -234,6 +343,15 @@ function bindViewerControls() {
     })
   })
 
+  el('box-3d-full').addEventListener('click', () => {
+    const stage = el('box-3d')
+    if (document.fullscreenElement) document.exitFullscreen()
+    else if (stage.requestFullscreen) stage.requestFullscreen().catch(() => {})
+  })
+  document.addEventListener('fullscreenchange', () => {
+    el('box-3d-full').classList.toggle('on', document.fullscreenElement === el('box-3d'))
+  })
+
   el('box-3d-png').addEventListener('click', () => {
     const a = document.createElement('a')
     a.download = 'caja_3d.png'
@@ -266,12 +384,86 @@ function setBoxView(view) {
   el('box-preview').hidden = view !== 'sheet'
 }
 
+function syncDecorUi() {
+  const d = box.decor
+  document.querySelectorAll('.design-btn').forEach(b => b.classList.toggle('on', b.dataset.design === d.design))
+  el('box-decor-title').value = d.title
+  el('box-decor-subtitle').value = d.subtitle
+  el('box-decor-labels').value = d.labels
+  el('box-decor-front').value = d.front
+  el('box-decor-font').value = d.font
+  el('box-decor-labels-field').hidden = d.design !== 'labels'
+  el('box-decor-text-fields').hidden = d.design === 'none' || d.design === 'labels'
+  const noLid = box.kind === 'box' && box.lid === 'open'
+  el('box-decor-hint').textContent = noLid
+    ? 'Elegí una tapa para poder decorarla.'
+    : d.design === 'window'
+      ? 'Ventana con acrílico: usa la tapa suelta. El título va debajo de la ventana.'
+      : 'Se graba en la cara de afuera de la tapa. En la vista 3D lo ves aplicado.'
+}
+
+function bindDecorUi() {
+  const grid = el('box-designs')
+  DESIGNS.forEach(design => {
+    const b = document.createElement('button')
+    b.type = 'button'
+    b.className = 'choice-btn design-btn'
+    b.dataset.design = design.id
+    b.textContent = design.label
+    b.addEventListener('click', () => {
+      box.decor.design = design.id
+      if (design.id === 'window' && box.lid !== 'lift') {
+        box.lid = 'lift'
+        document.querySelectorAll('.lid-btn').forEach(x => x.classList.toggle('on', x.dataset.lid === 'lift'))
+        el('box-lid-hint').textContent = LID_HINTS.lift
+      }
+      clearActivePreset()
+      syncDecorUi()
+      update()
+    })
+    grid.appendChild(b)
+  })
+  const fontSelect = el('box-decor-font')
+  Object.entries(FONTS).forEach(([key, font]) => {
+    const opt = document.createElement('option')
+    opt.value = key
+    opt.textContent = font.label
+    fontSelect.appendChild(opt)
+  })
+  const fields = { 'box-decor-title': 'title', 'box-decor-subtitle': 'subtitle', 'box-decor-labels': 'labels', 'box-decor-front': 'front', 'box-decor-font': 'font' }
+  let timer = 0
+  Object.entries(fields).forEach(([id, key]) => {
+    const input = el(id)
+    input.addEventListener(input.tagName === 'SELECT' ? 'change' : 'input', () => {
+      box.decor[key] = input.value
+      clearActivePreset()
+      clearTimeout(timer)
+      timer = setTimeout(update, 180)
+    })
+  })
+  syncDecorUi()
+}
+
+const ORIENT_HINTS = {
+  horizontal: 'La tapa va arriba y los compartimentos se ven desde arriba.',
+  vertical: 'Caja alta tipo dispensador: los saquitos se apilan en columnas, se cargan por arriba y se sacan por la ranura de abajo de cada columna. Ideal para colgar en la pared.',
+}
+
+function syncOrientUi() {
+  document.querySelectorAll('.orient-btn').forEach(b => b.classList.toggle('on', b.dataset.orient === box.orientation))
+  el('box-orient-hint').textContent = ORIENT_HINTS[box.orientation]
+  el('box-rows').disabled = box.kind === 'box' && box.orientation === 'vertical'
+  el('box-wall').classList.toggle('on', box.wallMount)
+}
+
 function syncKindUi() {
   document.querySelectorAll('.kind-btn').forEach(b => b.classList.toggle('on', b.dataset.kind === box.kind))
   document.querySelectorAll('[data-kinds]').forEach(node => {
     node.hidden = !node.dataset.kinds.split(' ').includes(box.kind)
   })
   el('box-kind-hint').textContent = KIND_HINTS[box.kind]
+  if (el('box-designs').childElementCount) syncDecorUi()
+  syncOrientUi()
 }
 
 // ── PRESETS ────────────────────────────────────────────────────
@@ -288,6 +480,7 @@ function syncControls() {
   el('box-foot').value      = box.footHeight
   el('box-drainage').classList.toggle('on', box.drainage)
   syncKindUi()
+  syncDecorUi()
   el('box-inner').classList.toggle('on', box.innerDims)
   document.querySelectorAll('.lid-btn').forEach(b => b.classList.toggle('on', b.dataset.lid === box.lid))
   el('box-lid-hint').textContent = LID_HINTS[box.lid]
@@ -296,6 +489,7 @@ function syncControls() {
 function applyPreset(preset) {
   PRESET_FIELDS.forEach(field => { if (preset[field] !== undefined) box[field] = preset[field] })
   if (!preset.kind) box.kind = 'box'   // presets saved before box types existed
+  box.decor = { ...defaultDecor(), ...(preset.decor || {}) }
   activePreset = preset.id
   lidOpen = false
   syncControls()
@@ -354,8 +548,20 @@ function presetButton(preset, isSaved) {
 function renderPresets() {
   const grid = el('box-presets')
   grid.innerHTML = ''
-  savedPresets.forEach(p => grid.appendChild(presetButton(p, true)))
-  BOX_PRESETS.forEach(p => grid.appendChild(presetButton(p, false)))
+  const heading = text => {
+    const h = document.createElement('div')
+    h.className = 'preset-group'
+    h.textContent = text
+    grid.appendChild(h)
+  }
+  if (savedPresets.length) {
+    heading('Guardadas')
+    savedPresets.forEach(p => grid.appendChild(presetButton(p, true)))
+  }
+  PRESET_GROUPS.forEach(group => {
+    heading(group)
+    BOX_PRESETS.filter(p => p.group === group).forEach(p => grid.appendChild(presetButton(p, false)))
+  })
 }
 
 function saveCurrentPreset() {
@@ -369,7 +575,9 @@ function saveCurrentPreset() {
   }
 
   const preset = { id: `saved-${Date.now()}`, name, icon: '⭐' }
-  PRESET_FIELDS.forEach(field => { preset[field] = box[field] })
+  PRESET_FIELDS.forEach(field => {
+    preset[field] = box[field] && typeof box[field] === 'object' ? { ...box[field] } : box[field]
+  })
   savedPresets = [preset, ...savedPresets.filter(p => p.name !== name)]
 
   const stored = storeSavedPresets(savedPresets)
@@ -397,6 +605,33 @@ function onInput() {
 }
 
 export function initBoxTool() {
+  // The kerf test generator can hand its result over.
+  window.addEventListener('laser:set-kerf', e => {
+    box.kerf = e.detail.kerf
+    el('box-kerf').value = box.kerf
+    update()
+  })
+  bindDecorUi()
+  document.querySelectorAll('.orient-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      box.orientation = btn.dataset.orient
+      // A dispenser is tall and refills from the top: swap dimensions and pick a lift-off lid.
+      if (box.orientation === 'vertical' && box.height < box.depth) {
+        ;[box.height, box.depth] = [box.depth, box.height]
+      }
+      if (box.orientation === 'vertical' && box.lid === 'open') box.lid = 'lift'
+      clearActivePreset()
+      syncControls()
+      update()
+      if (viewer) viewer.playAssembly()
+    })
+  })
+  el('box-wall').addEventListener('click', () => {
+    box.wallMount = !box.wallMount
+    clearActivePreset()
+    syncOrientUi()
+    update()
+  })
   syncKindUi()
   savedPresets = loadSavedPresets()
   renderPresets()
@@ -439,6 +674,7 @@ export function initBoxTool() {
       clearActivePreset()
       document.querySelectorAll('.lid-btn').forEach(b => b.classList.toggle('on', b === btn))
       el('box-lid-hint').textContent = LID_HINTS[box.lid]
+      syncDecorUi()
       update()
     })
   })
@@ -458,6 +694,7 @@ export function initBoxTool() {
     const name = `${prefix}_${Math.round(box.width)}x${Math.round(box.depth)}x${Math.round(box.height)}_${box.thickness}mm`
     downloadSvgs(exportSvgs, name)
   })
+  attachDxf(el('box-dl-btn'), () => exportSvgs, () => `${{ box: 'caja', drawer: 'cajon', planter: 'maceta' }[box.kind]}_${Math.round(box.width)}x${Math.round(box.depth)}x${Math.round(box.height)}`, showMessage)
 
   document.querySelectorAll('.box-view-tab').forEach(tab => {
     tab.addEventListener('click', () => setBoxView(tab.dataset.boxview))

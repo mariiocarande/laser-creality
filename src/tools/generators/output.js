@@ -13,8 +13,9 @@ export function showPieces(refs, pieces, { allowRotate = false } = {}) {
     x: p.x, y: p.y, w: p.w, h: p.h, cut: turn(p.item.cut, p), engrave: turn(p.item.engrave, p),
   })))
   const svgs = placements.map(pl => buildSheetSvg(pl, machine.area.w, machine.area.h))
+  const labelled = sheets.map(sheet => sheet.map(p => ({ x: p.x, y: p.y, w: p.w, h: p.h, label: p.item.label })))
   renderSheetPreviews(refs.preview, placements.map(pl =>
-    buildSheetSvg(pl, machine.area.w, machine.area.h, { preview: true, previewStroke: 0.6 })))
+    buildSheetSvg(pl, machine.area.w, machine.area.h, { preview: true })), { pieces: labelled })
   return { svgs, sheets, oversize, machine }
 }
 

@@ -3,6 +3,7 @@ import { makeSampler, halftonePath, estimateCells, MAX_HALFTONE_CELLS } from '..
 import { buildSheetSvg, renderSheetPreviews, downloadSvgs } from '../../sheets.js'
 import { state } from '../../state.js'
 import { MACHINES } from '../../machines.js'
+import { attachDxf } from '../../dxfButton.js'
 import { controlsHtml, bindControls } from './form.js'
 import { toolLayout, layoutRefs } from './layout.js'
 
@@ -54,6 +55,7 @@ export const halftoneTool = {
   icon: '◉',
   title: 'Halftone',
   description: 'Foto → puntos, cuadrados o líneas reales en SVG. Cada punto es una forma, listo para grabar.',
+  categories: ['imagen'],
 
   mount(root, { onBack }) {
     root.innerHTML = toolLayout({
@@ -75,6 +77,7 @@ export const halftoneTool = {
       onClear: () => { source = null; update() },
     })
     refs.download('svg').addEventListener('click', () => exportSvg && downloadSvgs([exportSvg], `halftone_${model.pattern}`))
+    attachDxf(refs.download('svg'), () => [exportSvg], () => `halftone_${model.pattern}`, text => refs.setWarn(text))
     update()
   },
 }
@@ -114,7 +117,7 @@ function update() {
     cut: model.border ? `<rect x="0" y="0" width="${W.toFixed(3)}" height="${H.toFixed(3)}"/>` : '',
   }
   exportSvg = buildSheetSvg([placement], W, H)
-  renderSheetPreviews(refs.preview, [buildSheetSvg([placement], W, H, { preview: true, previewStroke: Math.max(0.15, W / 400) })])
+  renderSheetPreviews(refs.preview, [buildSheetSvg([placement], W, H, { preview: true })])
   refs.setEmpty('')
   refs.setInfo(`<strong>${W.toFixed(1)} × ${H.toFixed(1)} mm</strong> &nbsp;·&nbsp; ${count.toLocaleString('es')} formas`)
 
